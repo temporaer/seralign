@@ -2,6 +2,8 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include "Laplacian.hpp"
+#include <nana.h>
+#undef C
 
 /**********************************************************
  *          Laplacian Implementation                *

@@ -2,6 +2,8 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include "AdjMat.hpp"
+#include <nana.h>
+#undef C
 
 /**********************************************************
  *          AdjMat Implementation                *
@@ -33,7 +35,7 @@ AdjMat::~AdjMat()
 {
   // cleanup
 }
-boost::shared_ptr<AdjMat::AdjMatT> AdjMat::getAdjMat()
+boost::shared_ptr<AdjMat::AdjMatT> AdjMat::getAdjMat()const
 {
 	return mImpl->mAdjMat;
 }

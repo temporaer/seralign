@@ -102,12 +102,14 @@ ADD_SUBDIRECTORY( prob_dt )
 ADD_SUBDIRECTORY( configuration )
 ADD_SUBDIRECTORY( sdp_wrappers )
 ADD_SUBDIRECTORY( graph_gen )
+ADD_SUBDIRECTORY( seriation_gen )
 include_directories( 
   ${CMAKE_SOURCE_DIR}/tools
   ${CMAKE_SOURCE_DIR}/actions
   ${CMAKE_SOURCE_DIR}/configuration 
   ${CMAKE_SOURCE_DIR}/sdp_wrappers 
   ${CMAKE_SOURCE_DIR}/graph_gen
+  ${CMAKE_SOURCE_DIR}/seriation_gen
   )
 
 # subdirs: optional extensions
@@ -128,6 +130,9 @@ add_executable( hrmain main.cpp )
 add_custom_command (TARGET hrmain 
 	POST_BUILD COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q 
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating tags" VERBATIM)
+add_custom_command (TARGET hrmain 
+	POST_BUILD COMMAND mkid --include "C C++"
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating global-tags" VERBATIM)
 target_link_libraries(hrmain 
 	${Boost_LIBRARIES}  
 	${NANA_LIBRARIES} 
@@ -137,4 +142,5 @@ target_link_libraries(hrmain
 	hrtools
 	graph_gen
 	prob_dt
+	seriation_gen
 	)

@@ -6,8 +6,6 @@ namespace boost{ namespace numeric{namespace ublas{
 	template<class T, class A> class permutation_matrix;
 }}}
 #include <boost/shared_ptr.hpp>
-#include <nana.h>
-#undef C
 
 /**
  * @brief PermMat Matrix -- describes an ordering of nodes

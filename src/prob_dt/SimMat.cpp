@@ -2,6 +2,8 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include "SimMat.hpp"
+#include <nana.h>
+#undef C
 
 /**********************************************************
  *          SimMat Implementation                *

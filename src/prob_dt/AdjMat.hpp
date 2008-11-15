@@ -3,8 +3,6 @@
 
 #include <boost/numeric/ublas/fwd.hpp>
 #include <boost/shared_ptr.hpp>
-#include <nana.h>
-#undef C
 
 /**
  * @brief AdjMat contains an Adjacency Matrix
@@ -29,7 +27,7 @@ class AdjMat
 
 	typedef boost::numeric::ublas::matrix<double> AdjMatT;
 	void setAdjMat(boost::shared_ptr<AdjMatT>);
-	boost::shared_ptr<AdjMatT> getAdjMat();
+	boost::shared_ptr<AdjMatT> getAdjMat()const;
 
   private:
 

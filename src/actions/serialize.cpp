@@ -7,6 +7,9 @@
 #include <sdp_wrapper.hpp>
 #include <adjmat_gen.hpp>
 
+
+#include <SerGenAdj.hpp>
+
 #include "serialize.hpp"
 #include <nana.h>
 
@@ -21,17 +24,17 @@ void Serialize::operator()()
 		throw logic_error(string("Supplied AdjMatGen `") + adjmat_gen_name + "' does not exist");
 	adjmat_gen->configure();
 
-	shared_ptr<AdjMatGen::AdjMatT> adjmat_ptr((*adjmat_gen)());
+	ProbAdjPerm prob = (*adjmat_gen)();
 
-	//string seriation_gen_name            = gCfg().getString("serialize.seriation_gen");
-	//auto_ptr<SeriationGen> seriation_gen = genericFactory<SeriationGen>::instance().create(seriation_gen_name);
-	//if(!seriation_gen.get())
-		//throw logic_error(string("Supplied SeriationGen `") + seriation_gen_name + "' does not exist");
+	string seriation_gen_name            = gCfg().getString("serialize.seriation_gen");
+	auto_ptr<SerGenAdj> seriation_gen    = genericFactory<SerGenAdj>::instance().create(seriation_gen_name);
+	if(!seriation_gen.get())
+		throw logic_error(string("Supplied SerGenAdj `") + seriation_gen_name + "' does not exist");
 
-	//seriation_gen->configure();
+	seriation_gen->configure();
 
-	//SeriationGen::SeriationT randwalk;
-	//randwalk = (*seriation_gen)(adjmat_ptr);
+	Serialization randwalk;
+	randwalk = (*seriation_gen)(prob);
 }
 
 Serialize::~Serialize()

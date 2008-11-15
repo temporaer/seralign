@@ -3,6 +3,8 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 #include "PermMat.hpp"
+#include <nana.h>
+#undef C
 
 /**********************************************************
  *          PermMat Implementation                *
