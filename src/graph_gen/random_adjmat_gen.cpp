@@ -19,9 +19,10 @@ void RandomAdjMatGen::configure()
 	this->setSeed(gCfg().getFloat("rand_adj_mat_gen.seed"));
 }
 
-shared_ptr<RandomAdjMatGen::AdjMatT> RandomAdjMatGen::operator()()
+ProbAdjPerm RandomAdjMatGen::operator()()
 {
 	L("Generating Random AdjMat with n=%d p=%2.2f w=%d...",mMatrixSize,mConnectionProb,mWeightedEdges);
+	typedef AdjMat::AdjMatT AdjMatT;
 	shared_ptr<AdjMatT> adjmat_ptr(new AdjMatT(mMatrixSize,mMatrixSize));
 	
 	AdjMatT& adjmat = *adjmat_ptr;
@@ -50,7 +51,9 @@ shared_ptr<RandomAdjMatGen::AdjMatT> RandomAdjMatGen::operator()()
 		o << "; ";
 	}
 	o << " ]; \n";
-	return adjmat_ptr;
+	ProbAdjPerm prob;
+	prob.setAdjMat(adjmat_ptr);
+	return prob;
 }
 RandomAdjMatGen::~RandomAdjMatGen()
 {

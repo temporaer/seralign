@@ -8,6 +8,7 @@ ENDIF()
 include_directories( 
 	. 
 	${CMAKE_SOURCE_DIR}/configuration
+	${CMAKE_SOURCE_DIR}/prob_dt
 	)
 
 SET(SRC 

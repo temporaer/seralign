@@ -7,7 +7,7 @@ void AdjMatGen::configure()
 {
 }
 
-boost::shared_ptr<AdjMatGen::AdjMatT> AdjMatGen::operator()()
+ProbAdjPerm AdjMatGen::operator()()
 {
 	throw logic_error("Called AdjMatGen() w/o subclassing");
 }

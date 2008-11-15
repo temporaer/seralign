@@ -17,7 +17,7 @@ class RandomAdjMatGen : public AdjMatGen{
 		inline void setWeightedEdges(bool b){mWeightedEdges=b;}
 		inline void setSeed(float s){mSeed=s;}
 
-		virtual boost::shared_ptr<AdjMatT> operator()();
+		virtual ProbAdjPerm operator()();
 		virtual ~RandomAdjMatGen();
 };
 

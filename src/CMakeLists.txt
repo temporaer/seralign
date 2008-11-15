@@ -136,4 +136,5 @@ target_link_libraries(hrmain
 	hrconfig 
 	hrtools
 	graph_gen
+	prob_dt
 	)

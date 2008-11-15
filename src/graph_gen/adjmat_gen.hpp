@@ -3,14 +3,12 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/fwd.hpp>
+#include <ProbData.hpp>
 
 class AdjMatGen{
 	public:
 		virtual void configure();
-		typedef boost::numeric::ublas::matrix<double,
-				boost::numeric::ublas::column_major
-			> AdjMatT;
-		virtual boost::shared_ptr<AdjMatT> operator()();
+		virtual ProbAdjPerm operator()();
 		virtual ~AdjMatGen();
 };
 
