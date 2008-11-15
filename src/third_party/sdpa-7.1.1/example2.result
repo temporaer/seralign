@@ -1,0 +1,99 @@
+SDPA start at Sun Aug 17 23:06:55 2008
+"Example 1: mDim = 3, nBLOCK = 1, {2}"
+data      is example1.dat-s
+parameter is param.sdpa
+out       is example2.result
+DENSE computation
+   mu      thetaP  thetaD  objP      objD      alphaP  alphaD  beta 
+ 0 1.0e+04 1.0e+00 1.0e+00 -0.00e+00 +1.20e+03 1.0e+00 9.1e-01 2.00e-01
+ 1 1.6e+03 0.0e+00 9.4e-02 +8.39e+02 +7.51e+01 2.3e+00 9.6e-01 2.00e-01
+ 2 1.7e+02 5.8e-17 3.6e-03 +1.96e+02 -3.74e+01 1.3e+00 1.0e+00 2.00e-01
+ 3 1.8e+01 5.8e-17 1.5e-17 -6.84e+00 -4.19e+01 9.9e-01 9.9e-01 1.00e-01
+ 4 1.9e+00 4.5e-17 7.5e-18 -3.81e+01 -4.19e+01 1.0e+00 9.0e+01 1.00e-01
+ 5 1.9e-01 5.2e-17 5.2e-16 -4.15e+01 -4.19e+01 1.0e+00 1.0e+00 1.00e-01
+ 6 1.9e-02 4.8e-17 3.0e-17 -4.19e+01 -4.19e+01 1.0e+00 9.0e+01 1.00e-01
+ 7 1.9e-03 4.1e-17 2.2e-15 -4.19e+01 -4.19e+01 1.0e+00 1.0e+00 1.00e-01
+ 8 1.9e-04 4.3e-17 1.5e-17 -4.19e+01 -4.19e+01 1.0e+00 9.0e+01 1.00e-01
+ 9 1.9e-05 4.5e-17 3.4e-16 -4.19e+01 -4.19e+01 1.0e+00 1.0e+00 1.00e-01
+10 1.9e-06 5.1e-17 1.5e-17 -4.19e+01 -4.19e+01 1.0e+00 1.0e+00 1.00e-01
+
+phase.value  = pdOPT     
+   Iteration = 10
+          mu = +1.9180668442024505e-06
+relative gap = +9.1554508630291778e-08
+        gap  = +3.8361336884049010e-06
+     digits  = +7.0383202638686431e+00
+objValPrimal = -4.1899996163866277e+01
+objValDual   = -4.1900000000000013e+01
+p.feas.error = +6.2347269333718771e-15
+d.feas.error = +1.4210854715202004e-14
+total time   = 0.000000
+
+
+Parameters are
+maxIteration = 40
+epsilonStar  = +9.9999999999999995e-08
+lambdaStar   = +1.0000000000000000e+02
+omegaStar    = +2.0000000000000000e+00
+lowerBound   = -1.0000000000000000e+05
+upperBound   = +1.0000000000000000e+05
+betaStar     = +1.0000000000000001e-01
+betaBar      = +2.0000000000000001e-01
+gammaStar    = +9.0000000000000002e-01
+epsilonDash  = +9.9999999999999995e-08
+xPrint       = %+8.3e 
+XPrint       = %+8.3e 
+YPrint       = %+8.3e 
+infPrint     = %+10.16e 
+
+                         Time(sec)  Ratio(% : MainLoop) 
+ Predictor time  =       0.000000,  nan
+ Corrector time  =       0.000000,  nan
+ Make bMat time  =       0.000000,  nan
+ Make bDia time  =       0.000000,  nan
+ Make bF1  time  =       0.000000,  nan
+ Make bF2  time  =       0.000000,  nan
+ Make bF3  time  =       0.000000,  nan
+ Make bPRE time  =       0.000000,  nan
+ Make rMat time  =       0.000000,  nan
+ Make gVec Mul   =       0.000000,  nan
+ Make gVec time  =       0.000000,  nan
+ Cholesky bMat   =       0.000000,  nan
+ Ste Pre time    =       0.000000,  nan
+ Ste Cor time    =       0.000000,  nan
+ solve           =       0.000000,  nan
+ sumDz           =       0.000000,  nan
+ makedX          =       0.000000,  nan
+ symmetriseDx    =       0.000000,  nan
+ makedXdZ        =       0.000000,  nan
+ xMatTime        =       0.000000,  nan
+ zMatTime        =       0.000000,  nan
+ invzMatTime     =       0.000000,  nan
+ xMatzMatTime    =       0.000000,  nan
+ EigxMatTime     =       0.000000,  nan
+ EigzMatTime     =       0.000000,  nan
+ EigxMatzMatTime =       0.000000,  nan
+ updateRes       =       0.000000,  nan
+ EigTime         =       0.000000,  nan
+ sub_total_bMat  =       0.000000,  nan
+ Main Loop       =       0.000000,  nan
+ File Check      =       0.000000,  nan
+ File Change     =       0.000000,  nan
+ File Read       =       0.000000,  nan
+ Total           =       0.000000,  nan
+
+xVec = 
+{-1.100e+00,-2.738e+00,-5.500e-01}
+xMat = 
+{
+{ {+4.784e-07,+6.578e-07 },
+  {+6.578e-07,+2.823e-06 }   }
+}
+yMat = 
+{
+{ {+5.900e+00,-1.375e+00 },
+  {-1.375e+00,+1.000e+00 }   }
+}
+    main loop time = 0.000000
+        total time = 0.000000
+  file   read time = 0.000000

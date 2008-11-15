@@ -1,0 +1,5 @@
+SDPA start at Sat Oct 11 13:28:24 2008
+*Example 2:
+*mDim = 5, nBLOCK = 3, {2,3,-2}
+data      is example2.dat
+out       is example2.out

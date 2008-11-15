@@ -1,0 +1,42 @@
+Prerequisites
+-------------
+
+You need the following to compile:
+
+- a current boost version (tested with 1.35)
+- GNU NANA  (Logging + Assertions)
+- an SDP-Solver (see below)
+
+
+Compiling
+---------
+
+$ mkdir -p build/release
+$ cd build/release
+$ cmake ../../src
+$ make
+
+
+SDP-Solvers
+------------
+
+You will need at least one of the following:
+1) CSDP
+   $ cd src/third_party/Csdp-6.0.1
+   $ make
+2) DSDP
+   -> get debian package via apt-get
+3) SDPA
+   first, make sure you have ATLAS/BLAS installed
+   $ cd src/third_party/sdpa-7.1.1/
+   $ ./configure --with-blas="-latlas"
+
+   more help is available here:
+   http://homepage.mac.com/klabtitech/sdpa-homepage/files/sdpa.7.1.1.manual.20080618.pdf
+4) SDPLR
+   again, you will need ATLAS/BLAS
+   $ cd src/third_party/SDPLR-1.02
+   $ make
+
+Finally, run cmake, it will detect the installed libraries 
+and compile the wrappers as needed.

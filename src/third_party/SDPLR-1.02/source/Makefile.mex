@@ -1,0 +1,35 @@
+include ../Makefile.inc
+
+LIB_DIRS_2 = -L../lib
+
+APPL_SRCS = \
+          copystructures.c \
+          dataoper.c \
+          eigen.c \
+          initialize.c \
+          lbfgs.c \
+          linesearch.c \
+          main.c \
+          misc.c \
+          params.c \
+          pcg.c \
+          precond.c \
+          rankreduce.c \
+          readdata.c \
+          sdplrlib.c \
+          timefuncs.c \
+          user.c \
+          util.c
+
+APPL_OBJS = $(APPL_SRCS:.c=.o)
+
+sdplr: $(APPL_OBJS) 
+	${MEX} -v mexsdplr.c -o ../mexsdplr.${MEXEXT} $(APPL_OBJS) $(LIB_DIRS) $(LIB_DIRS_2) $(LIBSMEX)
+
+$(APPL_OBJS): $(OBJECT)%.o : $(SOURCE)%.c
+	$(CC) $(CFLAGS) $(DEFINES) -D__MEX -c $< -o $@
+
+clean:
+	rm -f *.o
+
+

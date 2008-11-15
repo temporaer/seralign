@@ -1,0 +1,30 @@
+SDPLR 1.02 paramter file (automatically generated)
+
+--> Basic parameters <--
+
+Input type (1=SDPA, 2=SDPLR) : 1
+Feasibility tolerance : 1.0e-5
+Centrality tolerance : 1.0e-1
+Step direction calculation (1=LBFGS, 2=TN, 3=switch) : 1
+Penalty factor increase : 2.0
+Rank reduction (1=yes, 0=no) : 0
+Time limit (in seconds) : 3600
+Print level (0=nothing, 1=all) : 1
+Dimension threshold for dense matrices : 10
+Density threshold for dense matrices (in [0,1]) : 0.75
+
+--> Conditional parameters <--
+
+Number of LBFGS vectors : 4
+Feasibility level for switch : 1.0e-5
+Auxiliary structures to facilitate TN (1=yes, 0=no) : 1
+Rank tolerance (e.g., machine precision) : 2.2204460492503131e-16
+
+--> In-development parameters <--
+
+Preconditioning method (0,1,2,3,11,12,13,21,22,23,100) : 0
+Incomplete Cholesky density (in [0,1]) : 0.0
+Reorder data to reduce fill-in (1=yes, 0=no) : 0
+Duality gap tolerance : 1.0e-3
+Check dual bound (-1, 0, 1) : -1
+Dual bound type (1=+/-1, 2=0/1) : 1
