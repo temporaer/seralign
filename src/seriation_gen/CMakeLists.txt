@@ -17,5 +17,6 @@ add_library( seriation_gen SHARED
 	SerGenAdj.cpp              SerGenAdj.hpp
 	sdp_seriation_gen.cpp      sdp_seriation_gen.hpp
 	sdp_seriation_prob_gen.cpp sdp_seriation_prob_gen.hpp 
+	lev_seriation.cpp          lev_seriation.hpp
 	)
 target_link_libraries(seriation_gen  ${Boost_LIBRARIES} ${NANA_LIBRARIES} )

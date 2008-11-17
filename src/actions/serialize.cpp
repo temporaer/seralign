@@ -10,6 +10,10 @@
 
 #include <SerGenAdj.hpp>
 
+#include <DegreeSort.hpp>
+
+#include <matlab_io.hpp>
+
 #include "serialize.hpp"
 #include <nana.h>
 
@@ -24,8 +28,13 @@ void Serialize::operator()()
 		throw logic_error(string("Supplied AdjMatGen `") + adjmat_gen_name + "' does not exist");
 	adjmat_gen->configure();
 
-	ProbAdjPerm prob = (*adjmat_gen)();
+	ProbAdjPerm tmp =  (*adjmat_gen)() ;
+	ProbAdjLapPerm prob ( tmp );
 
+	DegreeSort ds;
+	ds.sort(prob);
+	prob.calculateLaplacian();
+	
 	string seriation_gen_name            = gCfg().getString("serialize.seriation_gen");
 	auto_ptr<SerGenAdj> seriation_gen    = genericFactory<SerGenAdj>::instance().create(seriation_gen_name);
 	if(!seriation_gen.get())
@@ -35,12 +44,15 @@ void Serialize::operator()()
 
 	Serialization randwalk;
 	randwalk = (*seriation_gen)(prob);
+
+	for ( unsigned int i=0; i<randwalk.size(); i++){
+		cout << prob.getOriginalIndex(randwalk[i]) << " ";
+	}
+	cout << endl;
 }
 
 Serialize::~Serialize()
 {
 }
 
-namespace{
-	registerInFactory<Action, Serialize> registerBase("Serialize");
-}
+namespace{ registerInFactory<Action, Serialize> registerBase("Serialize"); }

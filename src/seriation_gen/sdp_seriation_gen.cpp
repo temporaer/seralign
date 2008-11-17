@@ -1,6 +1,3 @@
-/*       Created   :  10/05/2008 10:25:05 PM
- *       Last Change: Sat Nov 15 09:00 PM 2008 CET
- */
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <sdp_prob.hpp>
@@ -163,7 +160,6 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 
 	ublas::vector<double> x = best_y;
 
-
 	//return readout_connected(x,adj);
 	return readout_plain(x,adj);
 
@@ -177,7 +173,7 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	// tricky: make sure x > 0 at all times.
 	x += ublas::scalar_vector<double>(n, *min_element(x.begin(),x.end()) + 1);
 
-	Serialization ret;
+	Serialization ret(n);
 	std::vector<bool> done(n,false);
 
 	// find highest component of x
@@ -186,7 +182,7 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 
 	L("Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
-		ret.push_back(idx);
+		ret[i] = idx;
 		done[idx] = true;
 		*it = 0.0; 
 		it = BEST_ELEM(x);
@@ -194,6 +190,7 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	}
 	return ret;
 }
+
 Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,const AdjMat::AdjMatT& adj)
 {
 	unsigned int n = x.size();
@@ -201,7 +198,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 	// tricky: make sure x > 0 at all times.
 	x += ublas::scalar_vector<double>(n, *min_element(x.begin(),x.end()) + 1);
 
-	Serialization ret;
+	Serialization ret(n);
 	std::vector<bool> done(n,false);
 
 	// find highest component of x
@@ -212,7 +209,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 	L("Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
 		// mark as visited
-		ret.push_back(idx);
+		ret[i] = idx;
 		done[idx] = true;
 
 		// make sure we do not visit again
@@ -244,15 +241,10 @@ void SDPSeriationGen::Impl::setSDPWrapper(std::auto_ptr<SDPWrapper> w){
   mSDPWrapper = w;
 }
 
-
-
-
 // Wrap SeriationGen::Impl
-
 SDPSeriationGen::SDPSeriationGen()
 :mImpl(new Impl)
 {
-
 }
 
 

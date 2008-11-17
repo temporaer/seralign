@@ -26,4 +26,11 @@ class ProbAdjPerm
 
 };
 
+class ProbAdjLapPerm : public ProbAdjPerm , public Laplacian
+{
+	public:
+	void calculateLaplacian();
+	ProbAdjLapPerm(const ProbAdjPerm&);
+};
+
 #endif /* #ifndef __PROBDATA_HPP__ */

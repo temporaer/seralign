@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include "SerGenAdj.hpp"
 #include <factory/factory.h>
+#include <boost/numeric/ublas/vector.hpp>
 
 using namespace std;
 

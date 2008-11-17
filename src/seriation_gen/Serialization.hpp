@@ -8,8 +8,8 @@
  */
 
 #if 1
-# include <vector>
- typedef std::vector<int> Serialization;
+# include <boost/numeric/ublas/fwd.hpp>
+ typedef boost::numeric::ublas::vector<int> Serialization;
 #else
 class Serialization
 {

@@ -1,5 +1,5 @@
 /*       Created   :  10/03/2008 09:37:53 PM
- *       Last Change: Wed Oct 22 05:00 PM 2008 CEST
+ *       Last Change: Sat Nov 15 10:00 PM 2008 CET
  */
 
 
@@ -73,7 +73,7 @@ void Configuration::Configuration_Impl::setGenericOptions()
 		mGeneric.add_options()
 			("help,h",   "print usage message")
 			("cfg,c",     value<string>()->default_value("config.dat"), "use this as a config file")
-			("action,a",  value<string>()->default_value("run"), "what to do")
+			("action,a",  value<string>()->default_value("Serialize"), "what to do")
 			("verbose,v", bool_switch(&mVerbose),"be verbose")
 			("quiet,q",   bool_switch(&mQuiet),"be quiet")
 			;

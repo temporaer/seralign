@@ -27,9 +27,10 @@ class PermMat
      */
     virtual ~PermMat();
 
-	typedef boost::numeric::ublas::permutation_matrix<double,boost::numeric::ublas::unbounded_array<double> > PermMatT;
+	typedef boost::numeric::ublas::matrix<int> PermMatT;
 	void setPermMat(boost::shared_ptr<PermMatT>);
-	boost::shared_ptr<PermMatT> getPermMat();
+	int getOriginalIndex(int i);
+	boost::shared_ptr<PermMatT> getPermMat()const;
 
   private:
 

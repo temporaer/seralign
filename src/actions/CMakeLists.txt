@@ -12,6 +12,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/seriation_gen
 	${CMAKE_SOURCE_DIR}/prob_dt
 	${CMAKE_SOURCE_DIR}/sdp_wrappers
+	${CMAKE_SOURCE_DIR}/tools
 	)
 
 add_library( actions SHARED action_cfg.cpp action.hpp action.cpp serialize.hpp serialize.cpp )

@@ -9,12 +9,14 @@ include_directories(
 	. 
 	${CMAKE_SOURCE_DIR}/configuration
 	${CMAKE_SOURCE_DIR}/prob_dt
+	${CMAKE_SOURCE_DIR}/tools
 	)
 
 SET(SRC 
 		adjmat_gen.cpp        adjmat_gen.hpp
         random_adjmat_gen.cpp random_adjmat_gen.hpp
 		adjmat_gen_cfg.cpp 
+		DegreeSort.cpp        DegreeSort.hpp
 		)
 
 add_library( graph_gen SHARED ${SRC} )

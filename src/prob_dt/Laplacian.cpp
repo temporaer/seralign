@@ -36,7 +36,7 @@ Laplacian::~Laplacian()
   // cleanup
 }
 
-boost::shared_ptr<Laplacian::LaplacianT> Laplacian::getLaplacian()
+boost::shared_ptr<Laplacian::LaplacianT> Laplacian::getLaplacian()const
 {
 	return mImpl->mLaplacian;
 }

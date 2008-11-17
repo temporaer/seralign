@@ -26,7 +26,7 @@ class Laplacian
 
 	typedef boost::numeric::ublas::matrix<double> LaplacianT;
 	void setLaplacian(boost::shared_ptr<LaplacianT>);
-	boost::shared_ptr<LaplacianT> getLaplacian();
+	boost::shared_ptr<LaplacianT> getLaplacian()const;
 
   private:
 
