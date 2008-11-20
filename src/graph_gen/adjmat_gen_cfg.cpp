@@ -13,6 +13,10 @@ class AdjMatGenCfg{
 AdjMatGenCfg::AdjMatGenCfg(){
 	options_description od("Adjacency Matrix Generation");
 
+	options_description mutagenesis("Mutagenesis");
+	mutagenesis.add_options()
+		("mutagenesis.in-file", value<string>(), "file with mutagenesis CSV data")
+		;
 	options_description rand_amg("Random AdjMatGen");
 	rand_amg.add_options()
 		("rand_adj_mat_gen.size,n", value<int>()->default_value(20), "Size of the Matrix to be generated")
@@ -21,6 +25,7 @@ AdjMatGenCfg::AdjMatGenCfg(){
 		("rand_adj_mat_gen.weighted", value<bool>()->default_value(false), "Whether edges should be weighted")
 		;
 	od.add(rand_amg);
+	od.add(mutagenesis);
 	gCfg().addModuleOptions(od);
 }
 

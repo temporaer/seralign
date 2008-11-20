@@ -3,8 +3,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <SerGenAdj.hpp>
-#include <nana.h>
-#undef C
 
 /**
  * @brief LEVSeriation Serialize using leading eigenvector of Laplacian

@@ -15,7 +15,24 @@ ProbAdjPerm AdjMatGen::operator()()
 AdjMatGen::~AdjMatGen()
 {
 }
+bool AdjMatGen::hasNext()
+{
+	return true;
+}
+
+string AdjMatGen::getPrologDescription(int idx)
+{
+	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 
+}
+
+string AdjMatGen::getGraphID()
+{
+	throw runtime_error("AdjMatGen::getGraphID() not implemented for subclass"); 
+}
+
 
 namespace{
 	registerInFactory<AdjMatGen, AdjMatGen> registerBase("AdjMatGen");
 }
+
+

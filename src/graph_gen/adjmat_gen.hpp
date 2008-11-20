@@ -10,6 +10,9 @@ class AdjMatGen{
 		virtual void configure();
 		virtual ProbAdjPerm operator()();
 		virtual ~AdjMatGen();
+		virtual bool hasNext();
+		virtual std::string getPrologDescription(int idx);
+		virtual std::string getGraphID();
 };
 
 #endif /* __ADJMAT_GEN_HPP__ */

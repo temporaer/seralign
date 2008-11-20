@@ -7,6 +7,7 @@
 #include <factory/factory.h>
 #include "lev_seriation.hpp"
 #include <nana.h>
+#undef C
 
 namespace lapack = boost::numeric::bindings::lapack;
 namespace ublas = boost::numeric::ublas;
