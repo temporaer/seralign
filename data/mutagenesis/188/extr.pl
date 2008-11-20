@@ -11,7 +11,7 @@ foreach $f( <s*.pl> ){
 	$f =~ /^(.*)\.pl/;
 	open OUT, ">$1.py" or die $!;
 	print OUT "pos = {}\n";
-	map {print OUT "pos[$_] = True\n"}@pos;
-	map {print OUT "pos[$_] = False\n"}@neg;
+	map {print OUT qq|pos["$_"] = True\n|}@pos;
+	map {print OUT qq|pos["$_"] = False\n|}@neg;
 	close OUT;
 }
