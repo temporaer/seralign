@@ -20,6 +20,10 @@ bool AdjMatGen::hasNext()
 	return true;
 }
 
+string AdjMatGen::getPlainDescription(int idx)
+{
+	throw runtime_error("AdjMatGen::getPlainDescription() not implemented for subclass"); 
+}
 string AdjMatGen::getPrologDescription(int idx)
 {
 	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 

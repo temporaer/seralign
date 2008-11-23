@@ -12,6 +12,7 @@ class AdjMatGen{
 		virtual ~AdjMatGen();
 		virtual bool hasNext();
 		virtual std::string getPrologDescription(int idx);
+		virtual std::string getPlainDescription(int idx);
 		virtual std::string getGraphID();
 };
 

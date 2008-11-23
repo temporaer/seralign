@@ -34,6 +34,7 @@ struct Mutagenesis::Impl{
 	void open();
 	bool hasNext();
 	string getPrologDescription(int idx);
+	string getPlainDescription(int idx);
 
 	vector<string> mNames;
 	vector<string> mTypes;
@@ -42,6 +43,9 @@ struct Mutagenesis::Impl{
 	string         mName;
 };
 
+string Mutagenesis::Impl::getPlainDescription(int idx){
+	return mTypes[idx];
+}
 string Mutagenesis::Impl::getPrologDescription(int idx){
 	if(idx>=mTypes.size()){
 		L("idx = %d, size = %d\n",idx,mTypes.size()); 
@@ -151,6 +155,10 @@ bool Mutagenesis::hasNext()
 void Mutagenesis::open()
 {
 	mImpl->open();
+}
+string Mutagenesis::getPlainDescription(int idx)
+{
+	return mImpl->getPlainDescription(idx);
 }
 string Mutagenesis::getPrologDescription(int idx)
 {
