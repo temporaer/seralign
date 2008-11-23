@@ -11,9 +11,13 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/graph_gen
 	${CMAKE_SOURCE_DIR}/seriation_gen
 	${CMAKE_SOURCE_DIR}/prob_dt
-	${CMAKE_SOURCE_DIR}/sdp_wrappers
 	${CMAKE_SOURCE_DIR}/tools
-	${CMAKE_SOURCE_DIR}/postproc
 	)
 
-add_library( actions SHARED action_cfg.cpp action.hpp action.cpp serialize.hpp serialize.cpp )
+SET(SRC 
+	postproc.cpp     postproc.hpp
+	RealXMLPrint.cpp RealXMLPrint.hpp
+	PlainPrinter.cpp   PlainPrinter.hpp
+		)
+
+add_library( postproc SHARED ${SRC} )
