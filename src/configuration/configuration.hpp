@@ -1,5 +1,5 @@
 /*       Created   :  10/03/2008 09:40:20 PM
- *       Last Change: Wed Oct 22 05:00 PM 2008 CEST
+ *       Last Change: Sat Nov 22 04:00 PM 2008 CET
  */
 #ifndef __CONFIGURATION_HPP__
 #define __CONFIGURATION_HPP__
@@ -64,6 +64,8 @@ class Configuration
 			}
 		}
 
+		//! convenience function: get output file (prepended with path)
+		std::string getOutputFile(const std::string& s);
 		//! convenience function: get parameter as string
 		std::string getString(const std::string& s);
 		//! convenience function: get parameter as float

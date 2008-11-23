@@ -1,5 +1,5 @@
 /*       Created   :  10/03/2008 09:37:53 PM
- *       Last Change: Sat Nov 15 10:00 PM 2008 CET
+ *       Last Change: Sat Nov 22 04:00 PM 2008 CET
  */
 
 
@@ -11,8 +11,10 @@
 using namespace std;
 
 // Boost
+#include <boost/filesystem/path.hpp>
 #include <boost/program_options.hpp>
 using namespace boost::program_options;
+namespace fs = boost::filesystem;
 
 // Nana
 #include <nana.h>
@@ -79,7 +81,9 @@ void Configuration::Configuration_Impl::setGenericOptions()
 			;
 
 		mConfig.add_options()
-			("output,o", value<string>()->default_value("out.dat"), "pathname for output")
+			("output,o", value<string>()->default_value("out.dat"), "filename for output")
+			("output-dir", value<string>()->default_value("."), "pathname for output (prepended to output)")
+			("output-format,f", value<string>()->default_value("RealXMLPrint"), "how to print output")
 			;
 
 		mCmdLine.add(mGeneric).add(mConfig).add(mHidden);
@@ -200,6 +204,12 @@ void Configuration::dependent_options(const std::string& s, const std::string& t
 boost::any Configuration::getAny(const std::string& s)
 {
 	return mImpl->get(s);
+}
+string Configuration::getOutputFile(const std::string& s)
+{
+	string file =  get<std::string>(s);
+	string path =  get<std::string>("output-dir");
+	return (fs::path(path) / fs::path(file)).string();
 }
 string Configuration::getString(const std::string& s)
 {

@@ -50,7 +50,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 find_package(PCHSupport QUIET)
 
 # Boost
-find_package( Boost 1.35 COMPONENTS program_options )
+find_package( Boost 1.35 COMPONENTS program_options filesystem )
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} configuration )
 
@@ -103,6 +103,7 @@ ADD_SUBDIRECTORY( configuration )
 ADD_SUBDIRECTORY( sdp_wrappers )
 ADD_SUBDIRECTORY( graph_gen )
 ADD_SUBDIRECTORY( seriation_gen )
+ADD_SUBDIRECTORY( postproc )
 include_directories( 
   ${CMAKE_SOURCE_DIR}/tools
   ${CMAKE_SOURCE_DIR}/actions
@@ -110,6 +111,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/sdp_wrappers 
   ${CMAKE_SOURCE_DIR}/graph_gen
   ${CMAKE_SOURCE_DIR}/seriation_gen
+  ${CMAKE_SOURCE_DIR}/postproc
   )
 
 # subdirs: optional extensions
@@ -143,4 +145,5 @@ target_link_libraries(hrmain
 	graph_gen
 	prob_dt
 	seriation_gen
+	postproc
 	)
