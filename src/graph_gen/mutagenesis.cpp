@@ -52,8 +52,14 @@ string Mutagenesis::Impl::getPrologDescription(int idx){
 		throw runtime_error("Mutagenesis::getPrologDescription(): Index too large");
 	}
 	ostringstream o;
-	o << "chemAtom(" << mTypes[idx] << ")";
-	o << ";weight(" << mParam1[idx] << ")";
+	if(mTypes[idx] == "b"){
+		// bond
+		o << "chemBond("<<mParam1[idx] << ")";
+	}else{
+		// atom
+		o << "chemAtom(" << mName <<","<< mNames[idx] << "," << mTypes[idx] << ")";
+		o << ";weight(" << mParam1[idx] << ")";
+	}
 	return o.str();
 }
 
