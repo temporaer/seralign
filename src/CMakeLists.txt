@@ -5,6 +5,7 @@ SET(Boost_ADDITIONAL_VERSIONS "1.34" "1.34.1" "1.35" "1.35.1" "1.36" "1.36.1" )
 # General stuff
 PROJECT(SerAlign CXX Fortran)
 SET(CMAKE_PROJECT_NAME "SerAlign REAL" )
+SET(SERALIGN_SCRIPT_DIR ${CMAKE_BINARY_DIR}/scripts)
 
 # find errors/eclipse auto-incl-dir discovery
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
