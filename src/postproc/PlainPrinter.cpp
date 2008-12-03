@@ -23,6 +23,8 @@ PlainPrint::~PlainPrint()
 void PlainPrint::atStart()
 {
 	mOS.open(gCfg().getOutputFile("output").c_str());
+	if(mOS.bad())
+		throw runtime_error("Cannot open output file!");
 }
 
 void PlainPrint::atEnd()

@@ -23,6 +23,9 @@ RealXMLPrint::~RealXMLPrint()
 void RealXMLPrint::atStart()
 {
 	mOS.open(gCfg().getOutputFile("output").c_str());
+	cout << "Writing to Output: "<< gCfg().getOutputFile("output").c_str()<<endl;
+	if(mOS.bad())
+		throw runtime_error("Could not open output file!");
 	mOS<< "<sequences>"<<endl; 
 }
 
