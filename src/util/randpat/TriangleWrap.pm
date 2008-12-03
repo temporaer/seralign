@@ -2,6 +2,8 @@ package TriangleWrap;
 use strict;
 use warnings;
 
+my $triangle_binary = "@TRIANGLE_BINARY@"; # expanded by CMAKE
+
 sub getTriangles{
 	my $vertices = shift;
 	my $fn = "tmp_support";
@@ -14,7 +16,7 @@ sub getTriangles{
 		print NODE join (' ', $i++,$$v[0],$$v[1]), "\n";
 	}
 	close NODE;
-	system("../../third_party/triangle/triangle","-Q","$fn.node");
+	system($triangle_binary,"-Q","$fn.node");
 	open ELE, "<$fn.1.ele" or die $!;
 	$_=<ELE>;  # ignore 1st line
 	my @triangles;

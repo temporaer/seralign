@@ -19,6 +19,8 @@
 
 # Author: Hannes Schulz <mail at hannes-schulz dot de>
 
+BEGIN{push @INC, "@SERALIGN_SCRIPT_DIR@"}
+
 use TriangleWrap;
 use Data::Dumper;
 
