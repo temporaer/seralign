@@ -22,8 +22,8 @@ void ExactDescriptiveStatistics::calcAll()const
 	else{
 		ivStoredMean = ivSum/ivN;
 		ivStoredVar  = ivSqSum/ivN - pow(ivSum/ivN,2);
-		if(ivStoredVar>=0)
-			ivStoredSD   = sqrt(ivStoredVar);
+		if(ivStoredVar>=-0.000001)
+			ivStoredSD   = sqrt(fabs(ivStoredVar));
 		else
 			std::cout << "WARNING: ExactDescriptiveStatistics::calcAll: Variance negative! State: "<<std::endl;
 		ivDataChanged = false;
