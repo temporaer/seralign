@@ -10,6 +10,7 @@ include_directories (
 	${CMAKE_SOURCE_DIR}/tools
 	${CMAKE_SOURCE_DIR}/sdp_wrappers 
 	${CMAKE_SOURCE_DIR}/prob_dt
+	${CMAKE_SOURCE_DIR}/graph_gen
 	)
 
 add_library( seriation_gen SHARED 
@@ -20,5 +21,6 @@ add_library( seriation_gen SHARED
 	lev_seriation.cpp          lev_seriation.hpp
 	rand_seriation_gen.cpp     rand_seriation_gen.hpp
 	plain_seriation_gen.cpp    plain_seriation_gen.hpp
+	repetative_seriation_gen.cpp repetative_seriation_gen.hpp
 	)
 target_link_libraries(seriation_gen  ${Boost_LIBRARIES} ${NANA_LIBRARIES} )
