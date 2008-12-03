@@ -17,6 +17,7 @@ include_directories(
 SET(SRC 
 	postproc.cpp     postproc.hpp
 	RealXMLPrint.cpp RealXMLPrint.hpp
+	GraphVizPrint.cpp GraphVizPrint.hpp
 	PlainPrinter.cpp   PlainPrinter.hpp
 		)
 
