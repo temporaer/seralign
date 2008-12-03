@@ -50,9 +50,11 @@ Serialization LEVSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	max_lambda = max_element(lambda.begin(),lambda.end());
 	max_lambda_idx = std::distance(lambda.begin(),max_lambda);
 	ublas::vector<double> leading = ublas::column(Eigv,max_lambda_idx);
+	//ublas::vector<double> leading = ublas::column(Eigv,0);
 
 	L("eigenvalue-readout\n");
 	return readout_plain(leading,*pap.getAdjMat());
+	//return readout_plain(lambda,*pap.getAdjMat());
 }
 
 #   define BEST_ELEM(X) max_element(X.begin(),X.end())
@@ -61,7 +63,7 @@ Serialization LEVSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	unsigned int n = x.size();
 
 	// tricky: make sure x > 0 at all times.
-	x += ublas::scalar_vector<double>(n, *min_element(x.begin(),x.end()) + 1);
+	x += ublas::scalar_vector<double>(n, 1 - (*min_element(x.begin(),x.end())));
 
 	Serialization ret(n);
 	std::vector<bool> done(n,false);

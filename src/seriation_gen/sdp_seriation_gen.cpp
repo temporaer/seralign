@@ -70,7 +70,7 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 
 #ifndef NDEBUG
 	I(ublas::is_symmetric(X));
-	L("Make sure we got the right thing: tr(EX)=1\n");
+	//L("Make sure we got the right thing: tr(EX)=1\n");
 	using ublas::range;
 	using ublas::prod;
 	for(unsigned int i=0;i<prob.F.size();i++){
@@ -162,7 +162,6 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 
 	//return readout_connected(x,adj);
 	return readout_plain(x,adj);
-
 }
 
 #   define BEST_ELEM(X) max_element(X.begin(),X.end())
@@ -171,7 +170,7 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	unsigned int n = x.size();
 
 	// tricky: make sure x > 0 at all times.
-	x += ublas::scalar_vector<double>(n, *min_element(x.begin(),x.end()) + 1);
+	x += ublas::scalar_vector<double>(n, 1 - (*min_element(x.begin(),x.end())));
 
 	Serialization ret(n);
 	std::vector<bool> done(n,false);
@@ -196,7 +195,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 	unsigned int n = x.size();
 
 	// tricky: make sure x > 0 at all times.
-	x += ublas::scalar_vector<double>(n, *min_element(x.begin(),x.end()) + 1);
+	x += ublas::scalar_vector<double>(n, 1 - (*min_element(x.begin(),x.end())));
 
 	Serialization ret(n);
 	std::vector<bool> done(n,false);
@@ -219,19 +218,20 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 		ublas::vector<double> tmp = ublas::element_prod(x,ublas::column(adj,idx));
 		it = BEST_ELEM(tmp);
 
-		idx = std::distance(tmp.begin(),it);
-
-		// point it in x, not tmp:
-		it = x.begin();
-		it += idx;
-
-		if( *it < 0.000000001 && ret.size()<n)
+		if( *it < 0.000000001 && i<n-1)
 		{
 			// if *it small, then either x[it] visited or adj(old_idx,idx) not connected
-			// we reached a dead end, find next best start point
-			it = BEST_ELEM(x);
+			// --> we reached a dead end, find next best start point
+			it  = BEST_ELEM(x);
 			idx = std::distance(x.begin(),it);
+		}else{
+			idx = std::distance(tmp.begin(),it);
+			// point it in x, not tmp:
+			it  = x.begin();
+			it += idx;
 		}
+
+
 	}
 	return ret;
 }
