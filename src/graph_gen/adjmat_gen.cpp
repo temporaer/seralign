@@ -34,6 +34,11 @@ string AdjMatGen::getGraphID()
 	throw runtime_error("AdjMatGen::getGraphID() not implemented for subclass"); 
 }
 
+std::string AdjMatGen::getGraphVizNodeAttribs(int idx)
+{
+	return string("");
+}
+
 
 namespace{
 	registerInFactory<AdjMatGen, AdjMatGen> registerBase("AdjMatGen");
