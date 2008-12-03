@@ -57,7 +57,8 @@ string Mutagenesis::Impl::getPrologDescription(int idx){
 		o << "chemBond("<<mParam1[idx] << ")";
 	}else{
 		// atom
-		o << "chemAtom(" << mName <<","<< mNames[idx] << "," << mTypes[idx] << ")";
+		//o << "chemAtom(" << mName <<","<< mNames[idx] << "," << mTypes[idx] << ")";
+		o << "chemAtom(" << mTypes[idx] << ")";
 		o << ";weight(" << mParam1[idx] << ")";
 	}
 	return o.str();
