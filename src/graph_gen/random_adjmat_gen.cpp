@@ -59,6 +59,4 @@ RandomAdjMatGen::~RandomAdjMatGen()
 {
 }
 
-namespace{
-	registerInFactory<AdjMatGen, RandomAdjMatGen> registerBase("RandomAdjMatGen");
-}
+namespace{ registerInFactory<AdjMatGen, RandomAdjMatGen> registerBase("RandomAdjMatGen"); }
