@@ -1,5 +1,5 @@
 /*       Created   :  10/07/2008 09:04:23 PM
- *       Last Change: Sat Nov 15 09:00 PM 2008 CET
+ *       Last Change: Tue Dec 02 11:00 PM 2008 CET
  */
 
 #include <configuration.hpp>
@@ -16,13 +16,18 @@ struct SeriationGenCfg{
 SeriationGenCfg::SeriationGenCfg(){
 	options_description od("Seriation Generator Options");
 	od.add_options()
-		("ser-gen.method,g", value<string>()->default_value("SDP"), "How to generate seriation")
 		("ser-gen.sdp-wrapper,w",value<string>()->default_value("SDPAWrapper"),"Which SDP-Solver to use")
 		("ser-gen.sdp-rand-plane-tries,t",value<int>()->default_value(10000),"How many random-hyperplane tries")
 		("ser-gen.sdp-rounding-method,m",value<int>()->default_value(2),"How to round pos semdef Matrix to Vec")
 		;
+	options_description rsg("Repetative Seriation Generator");
+	rsg.add_options()
+		("repetative-ser-gen.serializer", value<string>()->default_value("SDPSeriationGen"), "Which Serializer to call repeatedly")
+		("repetative-ser-gen.repetition_num", value<int>()->default_value(3), "How often to call the Serializer")
+		;
+
 	gCfg().addModuleOptions(od);
-	gCfg().dependent_options("ser-gen.method","ser-gen.sdp-wrapper");
+	gCfg().addModuleOptions(rsg);
 }
 namespace{
 	SeriationGenCfg _tmp;
