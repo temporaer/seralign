@@ -1,5 +1,6 @@
 
 #include	<algorithm>
+#include	<numeric>
 #include	<vector>
 #include	<map>
 #include	<boost/numeric/ublas/matrix.hpp>
@@ -30,7 +31,7 @@ struct DegSort{
 	DegSort(map<int,double>& i2d)
 		:idx2deg(i2d){}
 	inline bool operator()(int a, int b){
-		return idx2deg[a] > idx2deg[b];
+		return idx2deg[a] < idx2deg[b];
 	}
 };
 
@@ -48,23 +49,24 @@ void DegreeSort::sort(ProbAdjPerm& pap)
 	// map index to degree
 	std::map<int,double> idx2deg;
 	for(unsigned int i=0;i<adj.size2();i++){
-		double sum=0;
-		for(unsigned int j=0;j<adj.size1();j++)
-			sum += adj(i,j);
-		idx2deg[i] = sum;
+		ublas::matrix_column<AdjMat::AdjMatT> col(ublas::column(adj,i));
+		idx2deg[i] = std::accumulate(col.begin(),col.end(),0);
 	}
 
 	// sort the ids by degree
 	std::sort(idxs.begin(),idxs.end(),DegSort(idx2deg));
+#ifndef NDEBUG
+	for(int i=1;i<n;i++) { I(idx2deg[idxs[i-1]] <= idx2deg[idxs[i]]); }
+#endif
 
 	// record ordering in perm mat
 	for(unsigned int i=0;i<idxs.size();i++)
 		(*perm)(i,idxs[i]) = 1; // projects from idxs[i] to i, that is, to original pos
 	
 	boost::shared_ptr<AdjMat::AdjMatT> adj_new(new AdjMat::AdjMatT(n,n));
-	for(int i=0;i<n;i++)
-		for(int j=0;j<n;j++)
-			(*adj_new)(i,j) = adj(idxs[i],idxs[j]);
+
+	noalias(*adj_new) = prod(*perm, adj);
+	*adj_new = prod(*adj_new, trans(*perm));
 
 #ifndef NDEBUG
 	ublas::vector<int> idxs_vec(n);
@@ -78,7 +80,13 @@ void DegreeSort::sort(ProbAdjPerm& pap)
 #endif
 
 	// save perm mat in problem
-	pap.setPermMat(perm);
+	if(pap.getPermMat() == NULL)
+		pap.setPermMat(perm);
+	else{
+		PermMat::PermMatT tmp(n,n);
+		noalias(tmp) = prod(*perm, *pap.getPermMat());
+		*pap.getPermMat() = prod(tmp, trans(*perm));
+	}
 	// save adj mat in problem
 	pap.setAdjMat(adj_new);
 }
