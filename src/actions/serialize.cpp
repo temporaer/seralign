@@ -37,6 +37,8 @@ void Serialize::operator()()
 	auto_ptr<PostProc> out_ptr = genericFactory<PostProc>::instance().create(postproc_name);
 	if(!out_ptr.get())
 		throw logic_error(string("Supplied Postprocessor `") + postproc_name + "' does not exist");
+	
+	int max_num = gCfg().getInt("serialize.max_num");
 
 	out_ptr->atStart();
 	int cnt=0;
@@ -46,8 +48,14 @@ void Serialize::operator()()
 		if(!adjmat_gen->hasNext())
 			break;
 
+#if 1
 		DegreeSort ds;
 		ds.sort(prob);
+#else
+		shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
+		*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
+		prob.setPermMat(P_ptr);
+#endif
 		prob.calculateLaplacian();
 
 		string seriation_gen_name            = gCfg().getString("serialize.seriation_gen");
@@ -63,6 +71,8 @@ void Serialize::operator()()
 		out_ptr->atSeriation(*adjmat_gen, randwalk, prob);
 
 		cnt++;
+		if(cnt == max_num)
+			break;
 	}
 	out_ptr->atEnd();
 }
