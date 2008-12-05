@@ -31,7 +31,7 @@ PermMat::Impl::~Impl(){
 
 int PermMat::Impl::getOriginalIndex(int i)
 {
-	ublas::vector<int> v = ublas::row(*mPermMat,i);
+	ublas::vector<int> v = ublas::column(*mPermMat,i);
 	ublas::vector<int>::iterator it = find(v.begin(),v.end(),1);
 	if(it==v.end())
 		throw runtime_error("PermMat::getOriginalIndex(): Could not map index!");
