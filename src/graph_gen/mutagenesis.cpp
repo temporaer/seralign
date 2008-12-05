@@ -61,7 +61,9 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 		o << "chemAtom(" << mTypes[idx] << ")";
 		o << ";weight(" << mParam1[idx] << ")";
 	}
-	for(int i=-4;i<=4;i++){
+	int maxNeigh = gCfg().getInt("mutagenesis.num-seriation-neighbours");
+	for(int i=-maxNeigh;i<=maxNeigh;i++){
+		if(i==0)           continue;
 		int nidx = idx+i;              // nidx: position of neighbour in serialization
 		if(nidx<0)         continue;
 		if(nidx>=s.size()) continue;
