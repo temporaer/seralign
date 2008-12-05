@@ -3,6 +3,8 @@ GRTAGS
 GSYMS
 GTAGS
 tags
+src/cscope.files
+src/cscope.out
 src/ID
 build/*
 data/*
@@ -34,6 +36,11 @@ src/third_party/sdpa-7.1.1/spooles/build
 src/third_party/sdpa-7.1.1/sdpa
 
 src/third_party/seqan
+
+src/third_party/triangle/A.poly
+src/third_party/triangle/showme
+src/third_party/triangle/triangle
+src/third_party/triangle/triangle.zip
 
 
 .cproject
