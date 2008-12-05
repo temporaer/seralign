@@ -23,6 +23,18 @@ ProbAdjPerm JumbledAdjMatGen::operator()()
 	matrix<double> tmp(n,n);
 	noalias(tmp) = prod(perm, *mPap.getAdjMat());
 	(*mPap.getAdjMat())  = prod(tmp, trans(perm));
+	
+	// save perm mat in problem
+	if(mPap.getPermMat().get() == NULL){
+		perm = trans(perm);
+		mPap.setPermMat(boost::shared_ptr<PermMat::PermMatT>(new PermMat::PermMatT(perm)));
+	}
+	else{
+		PermMat::PermMatT tmp(n,n);
+		noalias(tmp) = prod(trans(perm), *mPap.getPermMat());
+		*mPap.getPermMat() = prod(trans(perm),*mPap.getPermMat() );
+	}
+
 	noalias(tmp) = prod(perm, *mPap.getPermMat());
 	(*mPap.getPermMat()) = prod(tmp, trans(perm));
 	return mPap;

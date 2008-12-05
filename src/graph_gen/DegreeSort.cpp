@@ -50,7 +50,7 @@ void DegreeSort::sort(ProbAdjPerm& pap)
 	std::map<int,double> idx2deg;
 	for(unsigned int i=0;i<adj.size2();i++){
 		ublas::matrix_column<AdjMat::AdjMatT> col(ublas::column(adj,i));
-		idx2deg[i] = std::accumulate(col.begin(),col.end(),0);
+		idx2deg[i] = std::accumulate(col.begin(),col.end(),0.0);
 	}
 
 	// sort the ids by degree
@@ -68,24 +68,15 @@ void DegreeSort::sort(ProbAdjPerm& pap)
 	noalias(*adj_new) = prod(*perm, adj);
 	*adj_new = prod(*adj_new, trans(*perm));
 
-#ifndef NDEBUG
-	ublas::vector<int> idxs_vec(n);
-	for(unsigned int i=0;i<idxs.size();i++)
-		idxs_vec(idxs[i]) = i;
-	ublas::vector<int> v(n);
-	for(int i=0;i<n;i++) v(i) = i;
-	ublas::vector<int> p = prod(trans(*perm),v);
-	ublas::vector<int> tmp = p - idxs_vec;
-	for(int i=0;i<n;i++) { I(tmp(i)==0); }
-#endif
-
 	// save perm mat in problem
-	if(pap.getPermMat() == NULL)
+	if(pap.getPermMat().get() == NULL){
+		*perm = trans(*perm);
 		pap.setPermMat(perm);
+	}
 	else{
 		PermMat::PermMatT tmp(n,n);
-		noalias(tmp) = prod(*perm, *pap.getPermMat());
-		*pap.getPermMat() = prod(tmp, trans(*perm));
+		noalias(tmp) = prod(trans(*perm), *pap.getPermMat());
+		*pap.getPermMat() = prod(trans(*perm),*pap.getPermMat() );
 	}
 	// save adj mat in problem
 	pap.setAdjMat(adj_new);
