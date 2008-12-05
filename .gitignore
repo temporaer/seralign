@@ -33,6 +33,8 @@ src/third_party/sdpa-7.1.1/.deps
 src/third_party/sdpa-7.1.1/spooles/build
 src/third_party/sdpa-7.1.1/sdpa
 
+src/third_party/seqan
+
 
 .cproject
 .externalToolBuilders
