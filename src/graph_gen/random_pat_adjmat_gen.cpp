@@ -145,8 +145,8 @@ ProbAdjPerm RandomPatAdjmatGen::operator()()
 		if(!incl)
 			continue;
 		double d = 1;
-		//d *= sqrt( SQR(mNodes[e.first].x-mNodes[e.second].x)
-			//+      SQR(mNodes[e.first].y-mNodes[e.second].y));
+		d *= sqrt( SQR(mNodes[e.first].x-mNodes[e.second].x)
+			+      SQR(mNodes[e.first].y-mNodes[e.second].y));
 		//d *=      (mNodes[e.first ].part_of_pattern || mNodes[e.second].part_of_pattern)? 2 : 1;
 		A(e.first,e.second) = d;
 		A(e.second,e.first) = d;
