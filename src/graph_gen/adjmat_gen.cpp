@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <factory/factory.h>
 #include "adjmat_gen.hpp"
+#include <Serialization.hpp>
 using namespace std;
 
 void AdjMatGen::configure()
@@ -20,11 +21,11 @@ bool AdjMatGen::hasNext()
 	return true;
 }
 
-string AdjMatGen::getPlainDescription(int idx)
+string AdjMatGen::getPlainDescription(int ser_idx, const Serialization&)
 {
 	throw runtime_error("AdjMatGen::getPlainDescription() not implemented for subclass"); 
 }
-string AdjMatGen::getPrologDescription(int idx)
+string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&)
 {
 	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 
 }

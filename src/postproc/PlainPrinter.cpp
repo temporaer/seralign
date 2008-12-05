@@ -34,13 +34,15 @@ void PlainPrint::atEnd()
 
 void PlainPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
-		seqhead(gen);
-		for(unsigned int i=0; i<ser.size(); i++)
-		{
-			int idx = prob.getOriginalIndex(ser[i]);
-			mOS	<< gen.getPlainDescription(idx);
-		}
-		seqfoot();
+	Serialization cpy = ser;
+	for(unsigned int i=0;i<ser.size();i++)
+		cpy[i] = prob.getOriginalIndex(ser[i]);
+	seqhead(gen);
+	for(unsigned int i=0; i<cpy.size(); i++)
+	{
+		mOS	<< gen.getPlainDescription(i, cpy);
+	}
+	seqfoot();
 }
 
 void PlainPrint::seqhead(AdjMatGen& gen){

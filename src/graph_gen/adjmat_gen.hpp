@@ -3,20 +3,33 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/fwd.hpp>
+#include <Serialization.hpp>
 #include <ProbData.hpp>
 
+
+
+/**
+ * Adjacency matrix generator base class.
+ */
 class AdjMatGen{
 	public:
-		virtual void configure();
-		virtual ProbAdjPerm operator()();
-		virtual ~AdjMatGen();
-		virtual bool hasNext();
+		virtual void configure();          ///< call setters/getters using data from config-file
+		virtual ProbAdjPerm operator()();  ///< generate a adjacency matrix
+		virtual ~AdjMatGen();              ///< virtual destructor
+		virtual bool hasNext();            ///< whether there are more adjacency-matrices available.
 
-		virtual std::string getPrologDescription(int idx);
-		virtual std::string getPlainDescription(int idx);
+		/// get a description of the node content in the form of a prolog program
+		virtual std::string getPrologDescription(int ser_idx, const Serialization& s);
+
+		/// get a description of the node content suitable for one-line-per serialization presentation
+		virtual std::string getPlainDescription(int ser_idx, const Serialization& s);
+
+		/// get a unique id for the graph
 		virtual std::string getGraphID();
 
-		virtual std::string getGraphVizNodeAttribs(int idx); //< should start with a comma!
+		/// for drawing: return additional node attributes in graphviz-syntax.
+		/// should start with a comma if none-empty!
+		virtual std::string getGraphVizNodeAttribs(int idx); 
 };
 
 #endif /* __ADJMAT_GEN_HPP__ */
