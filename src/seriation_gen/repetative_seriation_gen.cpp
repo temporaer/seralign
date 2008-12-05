@@ -64,7 +64,7 @@ Serialization RepetativeSerGen::operator()(const ProbAdjPerm& pap)
 	ublas::vector<double> avgpos(n);
 	for(int i=0;i<n;i++){
 		ublas::matrix_row<ublas::matrix<double> > row(ublas::row(positions,i));
-		avgpos(i) = accumulate(row.begin(),row.end(), 0);
+		avgpos(i) = accumulate(row.begin(),row.end(), 0.0);
 		cout << "avgpos("<<i<<") = "<<( avgpos(i)/mRepetitions )<<endl;
 	}
 	//matlab_matrix_out(cout, "positions", positions);

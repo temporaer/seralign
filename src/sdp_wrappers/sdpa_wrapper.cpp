@@ -1,5 +1,5 @@
 /*       Created   :  10/06/2008 12:52:01 AM
- *       Last Change: Fri Oct 24 10:00 AM 2008 CEST
+ *       Last Change: Fri Dec 05 08:00 PM 2008 CET
  */
 #include <exception>
 #include <fstream>
@@ -145,7 +145,7 @@ bool SDPAWrapper::readSDPAOutputFile(const SDPProb& p,const char*out, AnswerT& X
 
 void SDPAWrapper::configure()
 {
-	mParamFile = gCfg().get<string>("sdpa-param-file");
+	mParamFile = gCfg().get<string>("sdpa.param-file");
 }
 
 
@@ -171,7 +171,7 @@ SDPAWrapper::AnswerT SDPAWrapper::operator()(const SDPProb&p)
 		throw invalid_argument("SDPA-Wrapper: you need to set ParamFile!");
 	const char* fn_in  = "/tmp/x.dat";
 	const char* fn_out = "/tmp/x.out";
-	//const char* fn_par = gCfg().getString("sdpa-param-file").c_str();
+	//const char* fn_par = gCfg().getString("sdpa.param-file").c_str();
 	const char* fn_par = mParamFile.c_str();
 	writeSDPAInputFile(p,fn_in);
 	runSDPA(fn_in,fn_out,fn_par);
