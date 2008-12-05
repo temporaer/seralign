@@ -92,3 +92,7 @@ ADD_TEST(t_jumbled_adjmat_gen ./t_jumbled_adjmat_gen)
 ADD_EXECUTABLE(t_degreesort t_degreesort.cpp)                                                                                       
 TARGET_LINK_LIBRARIES ( t_degreesort ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
 ADD_TEST(t_degreesort ./t_degreesort) 
+
+ADD_EXECUTABLE(t_origidx t_origidx.cpp)                                                                                       
+TARGET_LINK_LIBRARIES ( t_origidx ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
+ADD_TEST(t_origidx ./t_origidx) 
