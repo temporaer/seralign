@@ -28,8 +28,8 @@ class Mutagenesis :public AdjMatGen
 	virtual void configure();
 	virtual ProbAdjPerm operator()();
 	virtual bool hasNext();
-	virtual std::string getPrologDescription(int idx);
-	virtual std::string getPlainDescription(int idx);
+	virtual std::string getPrologDescription(int ser_idx,const Serialization&);
+	virtual std::string getPlainDescription(int ser_idx,const Serialization&);
 	virtual std::string getGraphID();
 
 	void setInputFilename(std::string&);

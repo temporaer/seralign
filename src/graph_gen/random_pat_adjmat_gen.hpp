@@ -26,8 +26,8 @@ class RandomPatAdjmatGen: public AdjMatGen{
 		virtual ProbAdjPerm operator()();
 		virtual ~RandomPatAdjmatGen();
 		virtual bool hasNext();
-		virtual std::string getPrologDescription(int idx);
-		virtual std::string getPlainDescription(int idx);
+		virtual std::string getPrologDescription(int ser_idx, const Serialization&);
+		virtual std::string getPlainDescription(int ser_idx, const Serialization&);
 		virtual std::string getGraphID();
 		virtual std::string getGraphVizNodeAttribs(int idx); //< should start with a comma!
 

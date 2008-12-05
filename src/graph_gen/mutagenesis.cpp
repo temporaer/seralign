@@ -9,7 +9,6 @@
 #include	<boost/algorithm/string.hpp>
 #include	<boost/lexical_cast.hpp>
 #include    <boost/numeric/ublas/matrix.hpp>
-
 #include	<matlab_io.hpp>
 
 #include	<configuration.hpp>
@@ -33,8 +32,8 @@ struct Mutagenesis::Impl{
 	ProbAdjPerm nextGraph();
 	void open();
 	bool hasNext();
-	string getPrologDescription(int idx);
-	string getPlainDescription(int idx);
+	string getPrologDescription(int idx,const Serialization&);
+	string getPlainDescription(int idx,const Serialization&);
 
 	vector<string> mNames;
 	vector<string> mTypes;
@@ -43,10 +42,11 @@ struct Mutagenesis::Impl{
 	string         mName;
 };
 
-string Mutagenesis::Impl::getPlainDescription(int idx){
-	return mTypes[idx];
+string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s){
+	return mTypes[s[ser_idx]];
 }
-string Mutagenesis::Impl::getPrologDescription(int idx){
+string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s){
+	unsigned int idx = s[ser_idx];
 	if(idx>=mTypes.size()){
 		L("idx = %d, size = %d\n",idx,mTypes.size()); 
 		throw runtime_error("Mutagenesis::getPrologDescription(): Index too large");
@@ -60,6 +60,15 @@ string Mutagenesis::Impl::getPrologDescription(int idx){
 		//o << "chemAtom(" << mName <<","<< mNames[idx] << "," << mTypes[idx] << ")";
 		o << "chemAtom(" << mTypes[idx] << ")";
 		o << ";weight(" << mParam1[idx] << ")";
+	}
+	for(int i=-4;i<=4;i++){
+		int nidx = idx+i;              // nidx: position of neighbour in serialization
+		if(nidx<0)         continue;
+		if(nidx>=s.size()) continue;
+		int idx = s[nidx];             // idx: original position of neighbour
+		if(mTypes[idx]!="b"){
+			o << ";neighChemAtom("<<mTypes[idx]<<")";
+		}
 	}
 	return o.str();
 }
@@ -163,13 +172,13 @@ void Mutagenesis::open()
 {
 	mImpl->open();
 }
-string Mutagenesis::getPlainDescription(int idx)
+string Mutagenesis::getPlainDescription(int ser_idx, const Serialization& s)
 {
-	return mImpl->getPlainDescription(idx);
+	return mImpl->getPlainDescription(ser_idx,s);
 }
-string Mutagenesis::getPrologDescription(int idx)
+string Mutagenesis::getPrologDescription(int ser_idx,const Serialization& s)
 {
-	return mImpl->getPrologDescription(idx);
+	return mImpl->getPrologDescription(ser_idx,s);
 }
 std::string Mutagenesis::getGraphID()
 {
