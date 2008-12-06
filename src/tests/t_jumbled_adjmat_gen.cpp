@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <DegreeSort.hpp>
+#include <matlab_io.hpp>
 using namespace boost::program_options;
 namespace ublas = boost::numeric::ublas;
 using boost::any_cast;
@@ -56,6 +57,23 @@ BOOST_AUTO_TEST_CASE( testIdenticalOldPerm )
 	JumbledAdjMatGen jumble(pap);
 	for(int tries = 0; tries < 10; tries ++ ){
 		ProbAdjPerm        jpap  =  jumble();
+		AdjMat::AdjMatT&   jadj  = *jpap.getAdjMat();
+		PermMat::PermMatT& jperm = *jpap.getPermMat();
+		AdjMat::AdjMatT    tmp   = prod(jperm, jadj);
+		tmp = prod(tmp, trans(jperm));
+		for(int i=0; i<N;i++)
+			for(int j=0; j<N; j++)
+				BOOST_CHECK_CLOSE( tmp(i,j), adjmat(i,j), 0.01 ) ;
+	}
+}
+
+BOOST_AUTO_TEST_CASE( testIdenticalOldPerm2 )
+{
+	JumbledAdjMatGen jumble(pap);
+	for(int tries = 0; tries < 10; tries ++ ){
+		ProbAdjPerm        jpap  =  jumble();
+		DegreeSort ds;
+		ds.sort(jpap);
 		AdjMat::AdjMatT&   jadj  = *jpap.getAdjMat();
 		PermMat::PermMatT& jperm = *jpap.getPermMat();
 		AdjMat::AdjMatT    tmp   = prod(jperm, jadj);

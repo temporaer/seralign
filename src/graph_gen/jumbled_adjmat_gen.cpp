@@ -30,9 +30,7 @@ ProbAdjPerm JumbledAdjMatGen::operator()()
 		mPap.setPermMat(boost::shared_ptr<PermMat::PermMatT>(new PermMat::PermMatT(perm)));
 	}
 	else{
-		PermMat::PermMatT tmp(n,n);
-		noalias(tmp) = prod(trans(perm), *mPap.getPermMat());
-		*mPap.getPermMat() = prod(trans(perm),*mPap.getPermMat() );
+		*mPap.getPermMat() = prod(trans(perm),*mPap.getPermMat());
 	}
 
 	noalias(tmp) = prod(perm, *mPap.getPermMat());

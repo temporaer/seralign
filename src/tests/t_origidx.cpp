@@ -44,12 +44,16 @@ BOOST_FIXTURE_TEST_SUITE( suite, Fixture )
 BOOST_AUTO_TEST_CASE( testOrigIdx )
 {
 	matlab_matrix_out(cout,"sortedmat",*pap.getAdjMat());
-	DegreeSort ds;
-	ds.sort(pap);
-	matlab_matrix_out(cout,"sortedmat",*pap.getAdjMat());
-	BOOST_CHECK_EQUAL(pap.getOriginalIndex(N-1), 0);
-	BOOST_CHECK_EQUAL(pap.getOriginalIndex(N-2), 1);
-	BOOST_CHECK_EQUAL(pap.getOriginalIndex(N-3), 3);
+	JumbledAdjMatGen jumb(pap);
+	for(int iter=0;iter<10;iter++){
+		ProbAdjPerm mypap = jumb();
+		DegreeSort ds;
+		ds.sort(mypap);
+		matlab_matrix_out(cout,"sortedmat",*mypap.getAdjMat());
+		BOOST_CHECK_EQUAL(mypap.getOriginalIndex(N-1), 0);
+		BOOST_CHECK_EQUAL(mypap.getOriginalIndex(N-2), 1);
+		BOOST_CHECK_EQUAL(mypap.getOriginalIndex(N-3), 3);
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

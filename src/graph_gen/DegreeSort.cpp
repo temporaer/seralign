@@ -75,8 +75,7 @@ void DegreeSort::sort(ProbAdjPerm& pap)
 	}
 	else{
 		PermMat::PermMatT tmp(n,n);
-		noalias(tmp) = prod(trans(*perm), *pap.getPermMat());
-		*pap.getPermMat() = prod(trans(*perm),*pap.getPermMat() );
+		*pap.getPermMat() = prod(*pap.getPermMat(), trans(*perm ));
 	}
 	// save adj mat in problem
 	pap.setAdjMat(adj_new);

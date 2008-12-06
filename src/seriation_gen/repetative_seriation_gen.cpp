@@ -67,7 +67,7 @@ Serialization RepetativeSerGen::operator()(const ProbAdjPerm& pap)
 		avgpos(i) = accumulate(row.begin(),row.end(), 0.0);
 		cout << "avgpos("<<i<<") = "<<( avgpos(i)/mRepetitions )<<endl;
 	}
-	//matlab_matrix_out(cout, "positions", positions);
+	matlab_matrix_out(cout, "positions", positions);
 
 	Serialization finalser(n);
 	for(int i=0;i<n;i++)
