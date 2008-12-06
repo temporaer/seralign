@@ -131,7 +131,7 @@ endif(DOXYGEN_EXECUTABLE)
 MESSAGE(STATUS "Boost Libs: ${Boost_LIBRARIES} ${Boost_LIBRARY_DIRS}" )
 add_executable( hrmain main.cpp )
 add_custom_command (TARGET hrmain 
-	POST_BUILD COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q 
+	POST_BUILD COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q --exclude=third_party
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating tags" VERBATIM)
 add_custom_command (TARGET hrmain 
 	POST_BUILD COMMAND mkid --include "C C++"
