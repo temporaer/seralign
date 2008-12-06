@@ -15,6 +15,7 @@ ActionCfg::ActionCfg(){
 
 	options_description action("  Serialize Options");
 	action.add_options()
+		("serialize.want_degree_sorting",    value<bool>()->default_value(true), "whether to sort by degree before calling serializer")
 		("serialize.adjmat_gen",    value<string>()->default_value("RandomAdjMatGen"), "Adjacency Matrix Generator")
 		("serialize.seriation_gen", value<string>()->default_value("SDPSeriationGen"), "Seriation Generator")
 		("serialize.max_num", value<int>()->default_value(0), "Maximum number of graphs to serialize")

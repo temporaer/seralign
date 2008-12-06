@@ -46,6 +46,8 @@ void Serialize::operator()()
 		throw logic_error(string("Supplied SerGenAdj `") + seriation_gen_name + "' does not exist");
 	seriation_gen->configure();
 
+	bool wantDegreeSorting = gCfg().getBool("serialize.want_degree_sorting");
+
 	out_ptr->atStart();
 	int cnt=0;
 	while(true){
@@ -54,15 +56,14 @@ void Serialize::operator()()
 		ProbAdjLapPerm prob ( tmp );
 		if(!adjmat_gen->hasNext())
 			break;
-
-#if 1
-		DegreeSort ds;
-		ds.sort(prob);
-#else
-		shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
-		*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
-		prob.setPermMat(P_ptr);
-#endif
+		if(wantDegreeSorting){
+			DegreeSort ds;
+			ds.sort(prob);
+		}else{
+			shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
+			*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
+			prob.setPermMat(P_ptr);
+		}
 		prob.calculateLaplacian();
 
 		L("Action::Serialize %03d: Serializing...\n", cnt);
