@@ -11,10 +11,14 @@
 #include <cholesky.hpp> // from third_party
 #include <arg_max.hpp>
 #include <boost/lambda/lambda.hpp>
+#include <matlab_io.hpp>
 #include <cmath>
 #include <nana.h>
 #undef C
 #undef A
+
+#undef L_DEFAULT_GUARD
+#define L_DEFAULT_GUARD isVerbose()
 
 namespace l = boost::lambda;
 namespace lapack = boost::numeric::bindings::lapack;
@@ -52,18 +56,18 @@ void SDPSeriationGen::configure()
 
 Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 {
-	LG(isVerbose(),"Generating Seriation using SDP.\n");
+	L("Generating Seriation using SDP.\n");
 	const AdjMatT& adj = *pap.getAdjMat();
 	unsigned int n = adj.size1();
 	I(adj.size1() == adj.size2());
 	I(mSDPWrapper.get() != NULL);
 
-	LG(isVerbose(),"Generate the SDP-Problem\n");
+	L("Generate the SDP-Problem\n");
 	SDPProb prob;
 	SDPSeriationProbGen sdp_probgen(pap.getAdjMat());
 	sdp_probgen(prob);
 
-	LG(isVerbose(),"Solve the SDP-Problem using an SDP Wrapper\n");
+	L("Solve the SDP-Problem using an SDP Wrapper\n");
 	SDPWrapper::AnswerT _X(n,n);
 	noalias(_X) = (*mSDPWrapper)(prob);
 	ublas::symmetric_adaptor<SDPWrapper::AnswerT, ublas::lower> X(_X);
@@ -71,14 +75,14 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 
 #ifndef NDEBUG
 	I(ublas::is_symmetric(X));
-	//LG(isVerbose(),"Make sure we got the right thing: tr(EX)=1\n");
+	//L("Make sure we got the right thing: tr(EX)=1\n");
 	using ublas::range;
 	using ublas::prod;
 	for(unsigned int i=0;i<prob.F.size();i++){
 		ublas::matrix<double> R = prod(prob.F[i],X);
 		ublas::matrix_vector_range<SDPWrapper::AnswerT> diag(R, range (0,n), range (0,n));
 		double trace = ublas::sum(diag);
-		//LG(isVerbose(),"Trace should be: %2.3f, Trace is: %2.3f\n",prob.b[i],trace);
+		//L("Trace should be: %2.3f, Trace is: %2.3f\n",prob.b[i],trace);
 		I(fabs(trace-prob.b[i])<0.001);
 	}
 #endif
@@ -88,7 +92,7 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	SDPWrapper::AnswerT V (X);
 	if (Y_METHOD == 1 || Y_METHOD == 3){
 		// cholesky-decomposition
-		LG(isVerbose(),"Decompose X = V*V'\n");
+		L("Decompose X = V*V'\n");
 		if(!ulapack::chol_checked_inplace(V, true))
 			throw runtime_error("Could not cholesky-decompose matrix, seems not to be positive-semidefinite.");
 	}
@@ -98,7 +102,7 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	int max_lambda_idx=0;
 	if (Y_METHOD == 2 || Y_METHOD == 3){
 		// eigen-decomposition
-		LG(isVerbose(),"Decompose X = Q * D * Q'\n");
+		L("Decompose X = Q * D * Q'\n");
 		lapack::syev( 'V', 'L', Eigv, lambda, lapack::minimal_workspace() );
 		max_lambda = max_element(lambda.begin(),lambda.end());
 		max_lambda_idx = std::distance(lambda.begin(),max_lambda);
@@ -115,7 +119,7 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	// maximize original C
 	//SDPProb::MatT& B = prob.C;
 
-	LG(isVerbose(),"Rank reduction using random hyperplanes\n");
+	L("Rank reduction using random hyperplanes\n");
 	ublas::vector<double> best_y(n);
 	double best_y_val = -1E6;
 	ublas::vector<double> r(n);
@@ -156,13 +160,13 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 			best_y     = y;
 		}
 	}
-	LG(isVerbose(),"best_y_val = %2.10f\n",best_y_val);
-	cout << yvalstats<<endl;
+	L("best_y_val = %2.10f\n",best_y_val);
+	if(isVerbose()) cout << yvalstats<<endl;
 
 	ublas::vector<double> x = best_y;
 
-	//return readout_connected(x,adj);
-	return readout_plain(x,adj);
+	return readout_connected(x,adj);
+	//return readout_plain(x,adj);
 }
 
 #   define BEST_ELEM(X) max_element(X.begin(),X.end())
@@ -180,7 +184,7 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	ublas::vector<double>::iterator it = BEST_ELEM(x);
 	int idx = std::distance(x.begin(),it);
 
-	LG(isVerbose(),"Determine Actual Path through Graph.\n");
+	L("Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
 		ret[i] = idx;
 		done[idx] = true;
@@ -206,7 +210,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 	int idx = std::distance(x.begin(),it);
 
 
-	LG(isVerbose(),"Determine Actual Path through Graph.\n");
+	L("Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
 		// mark as visited
 		ret[i] = idx;
@@ -216,7 +220,10 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 		*it = 0.0; 
 
 		// [m,i] = max(x.*A(:,i));
-		ublas::vector<double> tmp = ublas::element_prod(x,ublas::column(adj,idx));
+		ublas::vector<double> adjcol = ublas::column(adj,idx);
+		for(unsigned int j=0;j<adjcol.size();j++)
+			if(adjcol[j]>0.00001) adjcol[j]=1;
+		ublas::vector<double> tmp = ublas::element_prod(x,adjcol);
 		it = BEST_ELEM(tmp);
 
 		if( *it < 0.000000001 && i<n-1)
