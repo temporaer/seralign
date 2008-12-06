@@ -1,5 +1,5 @@
 /*       Created   :  10/06/2008 12:52:01 AM
- *       Last Change: Fri Dec 05 08:00 PM 2008 CET
+ *       Last Change: Sat Dec 06 01:00 PM 2008 CET
  */
 #include <exception>
 #include <fstream>
@@ -145,6 +145,7 @@ bool SDPAWrapper::readSDPAOutputFile(const SDPProb& p,const char*out, AnswerT& X
 
 void SDPAWrapper::configure()
 {
+	SDPWrapper::configure();
 	mParamFile = gCfg().get<string>("sdpa.param-file");
 }
 
@@ -153,9 +154,9 @@ void SDPAWrapper::runSDPA(const char* in, const char* out, const char* param)
 {
 	char cmd[255];
 	sprintf(cmd,"%s -p %s -dd %s -o %s 2>&1 > /dev/null",SDPA_BINARY,param,in,out);
-	L("Exec Cmd: %s...",cmd);
+	LG(isVerbose(),"Exec Cmd: %s...",cmd);
 	int res = system(cmd);
-	L("done.");
+	LG(isVerbose(),"done.");
 	if(res == -1)
 		throw runtime_error(std::string("SDPAWrapper could not execute sdpa."));
 	if(WIFSIGNALED(res) &&

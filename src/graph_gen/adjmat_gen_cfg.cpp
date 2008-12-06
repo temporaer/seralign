@@ -11,21 +11,24 @@ class AdjMatGenCfg{
 };
 
 AdjMatGenCfg::AdjMatGenCfg(){
-	options_description od("Adjacency Matrix Generation");
+	options_description od("---------- Adjacency Matrix Generation ----------");
+	od.add_options()
+		("adjmat_gen.verbose", value<bool>()->default_value(false), "Whether to be verbose")
+		;
 
-	options_description mutagenesis("Mutagenesis");
+	options_description mutagenesis("  Mutagenesis");
 	mutagenesis.add_options()
 		("mutagenesis.in-file",                  value<string>(), "file with mutagenesis CSV data")
 		("mutagenesis.num-seriation-neighbours", value<int>()->default_value(0), "how many neighbours to each side in seriation to include in output")
 		;
-	options_description rand_amg("Random AdjMatGen");
+	options_description rand_amg("  Random AdjMatGen");
 	rand_amg.add_options()
 		("rand_adj_mat_gen.size,n", value<int>()->default_value(20), "Size of the Matrix to be generated")
 		("rand_adj_mat_gen.out-degree,p", value<float>()->default_value(3.0f), "Average out-degree of a vertex")
 		("rand_adj_mat_gen.seed,s", value<float>()->default_value(1.0f), "Seed for random number generator")
 		("rand_adj_mat_gen.weighted", value<bool>()->default_value(false), "Whether edges should be weighted")
 		;
-	options_description randpat_amg("Random Pattern AdjMatGen");
+	options_description randpat_amg("  Random Pattern AdjMatGen");
 	randpat_amg.add_options()
 		("rand_pat_adjmat_gen.size",    value<int>()->default_value(30), "Size of random pattern matrix to be generated")
 		("rand_pat_adjmat_gen.pattern_size", value<int>()->default_value(10), "Size of pattern to be generated")

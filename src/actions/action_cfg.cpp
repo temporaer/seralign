@@ -11,9 +11,9 @@ class ActionCfg{
 };
 
 ActionCfg::ActionCfg(){
-	options_description od("Action Options");
+	options_description od("---------- Action Options ----------");
 
-	options_description action("Serialize Options");
+	options_description action("  Serialize Options");
 	action.add_options()
 		("serialize.adjmat_gen",    value<string>()->default_value("RandomAdjMatGen"), "Adjacency Matrix Generator")
 		("serialize.seriation_gen", value<string>()->default_value("SDPSeriationGen"), "Seriation Generator")

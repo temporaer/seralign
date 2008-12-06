@@ -1,5 +1,5 @@
 /*       Created   :  10/06/2008 12:52:01 AM
- *       Last Change: Tue Oct 28 01:00 AM 2008 CET
+ *       Last Change: Sat Dec 06 01:00 PM 2008 CET
  */
 
 #include <fstream>
@@ -97,13 +97,13 @@ bool readCSDPOutputFile(const SDPProb& p, const char* out, CSDPWrapper::AnswerT&
 	return true;
 }
 
-void runCSDP(const char* in, const char* out)
+void runCSDP(const char* in, const char* out, bool verbose)
 {
 	char cmd[255];
 	sprintf(cmd,"%s %s %s 2>&1 > /dev/null",CSDP_BINARY,in,out);
-	L("Exec Cmd: %s...",cmd);
+	LG(verbose,"Exec Cmd: %s...",cmd);
 	int res = system(cmd);
-	L("done.\n");
+	LG(verbose,"done.\n");
 	if(res == -1)
 		throw runtime_error(std::string("CSDPWrapper could not execute csdp."));
 	if(WIFSIGNALED(res) &&
@@ -118,7 +118,7 @@ CSDPWrapper::AnswerT CSDPWrapper::Impl::operator()(const SDPProb& p){
 	const char* fn_in  = "/tmp/x.dat";
 	const char* fn_out = "/tmp/x.out";
 	writeSDPASparseInputFile(p,fn_in);
-	runCSDP(fn_in,fn_out);
+	runCSDP(fn_in,fn_out, isVerbose());
 	CSDPWrapper::AnswerT ret;
 	readCSDPOutputFile(p, fn_out,ret);
 	return ret;

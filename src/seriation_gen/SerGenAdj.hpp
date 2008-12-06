@@ -31,7 +31,13 @@ class SerGenAdj
 
 	virtual void configure();
 
+	/// whether to be verbose
+	static inline void setVerbose(bool b){mVerbose=b;}
+	/// whether to be verbose
+	static inline bool isVerbose()       {return mVerbose;}
+
   private:
+	static bool mVerbose;
 
 };
 

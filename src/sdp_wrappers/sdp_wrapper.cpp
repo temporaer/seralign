@@ -15,8 +15,10 @@ SDPWrapper::~SDPWrapper(){
 }
 void SDPWrapper::configure()
 {
+	setVerbose(gCfg().getBool("sdp-wrapper.verbose"));
 }
 
+bool SDPWrapper::mVerbose = false;
 
 namespace{
 	registerInFactory<SDPWrapper, SDPWrapper> registerBase("SDPWrapper");

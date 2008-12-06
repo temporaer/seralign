@@ -29,6 +29,7 @@ RandomPatAdjmatGen::RandomPatAdjmatGen()
 
 void RandomPatAdjmatGen::configure()
 {
+	AdjMatGen::configure(); 
 	this->setSize(gCfg().getInt("rand_pat_adjmat_gen.size"));
 	this->setPatSize(gCfg().getInt("rand_pat_adjmat_gen.pattern_size"));
 	this->setEdgeInclusionProb(gCfg().getFloat("rand_pat_adjmat_gen.edge_inclusion_prob"));
@@ -96,9 +97,9 @@ void RandomPatAdjmatGen::triangulateNodes(std::vector<Edge>& edges)
 	// execute triangulator
 	char cmd[255];
 	sprintf(cmd,"%s %s > %s 2> /dev/null",TRIANGULATION_COMMAND,outfile,infile);
-	L("Exec Cmd: %s...",cmd);
+	LG(isVerbose(),"Exec Cmd: %s...",cmd);
 	int res = system(cmd);
-	L("done.\n");
+	LG(isVerbose(),"done.\n");
 	if(res == -1)
 		throw runtime_error(std::string("RandomPatAdjmatGen could not execute triangulator."));
 	if(WIFSIGNALED(res) &&

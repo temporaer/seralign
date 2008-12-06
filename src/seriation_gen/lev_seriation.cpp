@@ -34,13 +34,13 @@ LEVSeriationGen::Impl::~Impl(){
 Serialization LEVSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 {
 	ProbAdjLapPerm pap2(pap);
-	L("Generating Laplacian\n");
+	LG(isVerbose(),"Generating Laplacian\n");
 	pap2.calculateLaplacian();
 	Laplacian::LaplacianT& L = *pap2.getLaplacian(); 
 	int n = L.size1();
 	Serialization ret(n);
 
-	L("Determine eigenvalues of laplacian\n");
+	LG(isVerbose(),"Determine eigenvalues of laplacian\n");
 	ublas::matrix<double,ublas::column_major> Eigv(L);
 	ublas::vector<double> lambda(n);
 	ublas::vector<double>::iterator max_lambda;
@@ -52,7 +52,7 @@ Serialization LEVSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	ublas::vector<double> leading = ublas::column(Eigv,max_lambda_idx);
 	//ublas::vector<double> leading = ublas::column(Eigv,0);
 
-	L("eigenvalue-readout\n");
+	LG(isVerbose(),"eigenvalue-readout\n");
 	return readout_plain(leading,*pap.getAdjMat());
 	//return readout_plain(lambda,*pap.getAdjMat());
 }
@@ -72,7 +72,7 @@ Serialization LEVSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	ublas::vector<double>::iterator it = BEST_ELEM(x);
 	int idx = std::distance(x.begin(),it);
 
-	L("Determine Actual Path through Graph.\n");
+	LG(isVerbose(),"Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
 		ret[i] = idx;
 		done[idx] = true;

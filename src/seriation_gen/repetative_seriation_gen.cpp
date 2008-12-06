@@ -21,6 +21,7 @@ RepetativeSerGen::RepetativeSerGen()
 
 void RepetativeSerGen::configure()
 {
+	SerGenAdj::configure();
 	this->setSerializer(gCfg().getString("repetative-ser-gen.serializer"));
 	this->setRepetitions(gCfg().getInt  ("repetative-ser-gen.repetition_num"));
 }
@@ -53,7 +54,7 @@ Serialization RepetativeSerGen::operator()(const ProbAdjPerm& pap)
 	
 	Serialization ser(n);
 	for(int rep=0;rep<mRepetitions;rep++){
-		L("RepetativeSerGen: Serializing %i of %i\n", rep+1, mRepetitions);
+		LG(isVerbose(),"RepetativeSerGen: Serializing %i of %i\n", rep+1, mRepetitions);
 		mypap = jam();
 		DegreeSort ds;
 		ds.sort(mypap);
@@ -65,7 +66,8 @@ Serialization RepetativeSerGen::operator()(const ProbAdjPerm& pap)
 	for(int i=0;i<n;i++){
 		ublas::matrix_row<ublas::matrix<double> > row(ublas::row(positions,i));
 		avgpos(i) = accumulate(row.begin(),row.end(), 0.0);
-		cout << "avgpos("<<i<<") = "<<( avgpos(i)/mRepetitions )<<endl;
+		if(isVerbose())
+			cout << "avgpos("<<i<<") = "<<( avgpos(i)/mRepetitions )<<endl;
 	}
 	//matlab_matrix_out(cout, "positions", positions);
 

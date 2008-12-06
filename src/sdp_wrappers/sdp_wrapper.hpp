@@ -1,5 +1,5 @@
 /*       Created   :  10/06/2008 12:54:34 AM
- *       Last Change: Fri Oct 31 10:00 AM 2008 CET
+ *       Last Change: Sat Dec 06 01:00 PM 2008 CET
  */
 
 #ifndef __SDP_WRAPPER_HPP__
@@ -16,5 +16,10 @@ class SDPWrapper{
 		virtual AnswerT operator()(const SDPProb&);
 		virtual void configure();
 		virtual ~SDPWrapper();
+
+		static inline void setVerbose(bool b){mVerbose=b;}
+		static inline bool  isVerbose()      {return mVerbose;}
+	private:
+		static bool mVerbose;
 };
 #endif /* __SDP_WRAPPER_HPP__ */

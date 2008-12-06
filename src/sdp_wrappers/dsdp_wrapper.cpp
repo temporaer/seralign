@@ -98,13 +98,13 @@ bool readDSDPOutputFile(const SDPProb& p, const char* out, DSDPWrapper::AnswerT&
 	return true;
 }
 
-void runDSDP(const char* in, const char* out)
+void runDSDP(const char* in, const char* out, bool verbose)
 {
 	char cmd[255];
 	sprintf(cmd,"%s %s -save %s 2>&1 > /dev/null",DSDP_BINARY,in,out);
-	L("Exec Cmd: %s...",cmd);
+	LG(verbose,"Exec Cmd: %s...",cmd);
 	int res = system(cmd);
-	L("done.\n");
+	LG(verbose,"done.\n");
 	if(res == -1)
 		throw runtime_error(std::string("DSDPWrapper could not execute dsdp."));
 	if(WIFSIGNALED(res) &&
@@ -116,11 +116,10 @@ void runDSDP(const char* in, const char* out)
 
 
 DSDPWrapper::AnswerT DSDPWrapper::Impl::operator()(const SDPProb& p){
-	//L("DSDPWrapper::operator()\n");
 	const char* fn_in  = "/tmp/x.dat";
 	const char* fn_out = "/tmp/x.out";
 	writeSDPASparseInputFile(p,fn_in);
-	runDSDP(fn_in,fn_out);
+	runDSDP(fn_in,fn_out, isVerbose());
 	DSDPWrapper::AnswerT ret;
 	readDSDPOutputFile(p, fn_out,ret);
 	return ret;
@@ -134,7 +133,6 @@ DSDPWrapper::DSDPWrapper()
 }
 DSDPWrapper::~DSDPWrapper()
 {
-    //L("Destroying DSDPWrapper");
 }
 DSDPWrapper::AnswerT DSDPWrapper::operator()(const SDPProb& prob)
 {

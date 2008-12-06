@@ -2,6 +2,7 @@
 #include "SerGenAdj.hpp"
 #include <factory/factory.h>
 #include <boost/numeric/ublas/vector.hpp>
+#include <configuration.hpp>
 
 using namespace std;
 
@@ -23,6 +24,9 @@ Serialization SerGenAdj::operator()(const ProbAdjPerm& pap)
 
 void SerGenAdj::configure()
 {
+	setVerbose(gCfg().getBool("ser-gen.verbose"));
 }
+
+bool SerGenAdj::mVerbose;
 
 namespace{ registerInFactory<SerGenAdj, SerGenAdj> registerBase("SerGenAdj"); }

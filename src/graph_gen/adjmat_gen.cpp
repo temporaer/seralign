@@ -2,10 +2,12 @@
 #include <factory/factory.h>
 #include "adjmat_gen.hpp"
 #include <Serialization.hpp>
+#include <configuration.hpp>
 using namespace std;
 
 void AdjMatGen::configure()
 {
+	setVerbose(gCfg().getBool("adjmat_gen.verbose"));
 }
 
 ProbAdjPerm AdjMatGen::operator()()
@@ -40,6 +42,7 @@ std::string AdjMatGen::getGraphVizNodeAttribs(int idx)
 	return string("");
 }
 
+bool AdjMatGen::mVerbose;
 
 namespace{
 	registerInFactory<AdjMatGen, AdjMatGen> registerBase("AdjMatGen");

@@ -30,6 +30,12 @@ class AdjMatGen{
 		/// for drawing: return additional node attributes in graphviz-syntax.
 		/// should start with a comma if none-empty!
 		virtual std::string getGraphVizNodeAttribs(int idx); 
+
+		/// whether to be verbose
+		static inline void setVerbose(bool b)  {mVerbose=b;}
+		static inline bool  isVerbose()        {return mVerbose;}
+	private:
+		static bool mVerbose;
 };
 
 #endif /* __ADJMAT_GEN_HPP__ */
