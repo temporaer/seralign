@@ -45,7 +45,7 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm&
 	// print node labels
 	for(unsigned int i=0; i<n; i++)
 	{
-		mOS	<< "  n" << i << "["
+		mOS	<< "  n" << ser[i] << "[" // use ID in adj-matrix
 			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, cpy)<<"\""
 			<<gen.getGraphVizNodeAttribs(cpy[i])<<"];"<<endl;
 	}
