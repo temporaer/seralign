@@ -40,9 +40,16 @@ void Serialize::operator()()
 	
 	int max_num = gCfg().getInt("serialize.max_num");
 
+	string seriation_gen_name            = gCfg().getString("serialize.seriation_gen");
+	auto_ptr<SerGenAdj> seriation_gen    = genericFactory<SerGenAdj>::instance().create(seriation_gen_name);
+	if(!seriation_gen.get())
+		throw logic_error(string("Supplied SerGenAdj `") + seriation_gen_name + "' does not exist");
+	seriation_gen->configure();
+
 	out_ptr->atStart();
 	int cnt=0;
 	while(true){
+		L("Action::Serialize %03d: Generating...\n", cnt);
 		ProbAdjPerm tmp =  (*adjmat_gen)() ;
 		ProbAdjLapPerm prob ( tmp );
 		if(!adjmat_gen->hasNext())
@@ -58,16 +65,11 @@ void Serialize::operator()()
 #endif
 		prob.calculateLaplacian();
 
-		string seriation_gen_name            = gCfg().getString("serialize.seriation_gen");
-		auto_ptr<SerGenAdj> seriation_gen    = genericFactory<SerGenAdj>::instance().create(seriation_gen_name);
-		if(!seriation_gen.get())
-			throw logic_error(string("Supplied SerGenAdj `") + seriation_gen_name + "' does not exist");
-
-		seriation_gen->configure();
-
+		L("Action::Serialize %03d: Serializing...\n", cnt);
 		Serialization randwalk;
 		randwalk = (*seriation_gen)(prob);
 
+		L("Action::Serialize %03d: Postprocessing...\n", cnt);
 		out_ptr->atSeriation(*adjmat_gen, randwalk, prob);
 
 		cnt++;
