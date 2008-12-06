@@ -27,6 +27,7 @@ SET(SRC
 		DegreeSort.cpp        DegreeSort.hpp
 		random_pat_adjmat_gen.cpp random_pat_adjmat_gen.hpp
 		jumbled_adjmat_gen.cpp jumbled_adjmat_gen.hpp
+		full_conn_adjmat_gen.cpp full_conn_adjmat_gen.hpp
 		)
 
 add_library( graph_gen SHARED ${SRC} )
