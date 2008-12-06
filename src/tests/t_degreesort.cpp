@@ -92,6 +92,25 @@ BOOST_AUTO_TEST_CASE( testOldPermCorrect )
 	
 }
 
+BOOST_AUTO_TEST_CASE( testOldPermCorrect2 )
+{
+	pap.setPermMat(
+			boost::shared_ptr<PermMat::PermMatT>(
+				new PermMat::PermMatT(ublas::identity_matrix<int>(n))));
+	DegreeSort ds;
+	ds.sort( pap );
+	ds.sort( pap ); // second sorting, should not change anything
+
+	AdjMat::AdjMatT&   sadj  = *pap.getAdjMat();
+	PermMat::PermMatT& sperm = *pap.getPermMat();
+	AdjMat::AdjMatT     tmp  = prod(sperm, sadj);
+	tmp = prod(tmp, trans(sperm));
+
+	for(int i=0;i<n;i++)
+		for(int j=0; j<n; j++)
+			BOOST_CHECK_CLOSE(tmp(i,j),adj(i,j),0.01);
+	
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
