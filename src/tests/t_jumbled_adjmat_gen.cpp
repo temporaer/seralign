@@ -69,11 +69,11 @@ BOOST_AUTO_TEST_CASE( testIdenticalOldPerm )
 
 BOOST_AUTO_TEST_CASE( testIdenticalOldPerm2 )
 {
+	DegreeSort ds;
+	ds.sort(pap);
 	JumbledAdjMatGen jumble(pap);
 	for(int tries = 0; tries < 10; tries ++ ){
 		ProbAdjPerm        jpap  =  jumble();
-		DegreeSort ds;
-		ds.sort(jpap);
 		AdjMat::AdjMatT&   jadj  = *jpap.getAdjMat();
 		PermMat::PermMatT& jperm = *jpap.getPermMat();
 		AdjMat::AdjMatT    tmp   = prod(jperm, jadj);
