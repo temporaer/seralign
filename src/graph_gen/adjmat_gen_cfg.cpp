@@ -18,6 +18,7 @@ AdjMatGenCfg::AdjMatGenCfg(){
 
 	options_description mutagenesis("  Mutagenesis");
 	mutagenesis.add_options()
+		("mutagenesis.kernel",                   value<string>()->default_value("kernelNull"), "Kernel to use")
 		("mutagenesis.in-file",                  value<string>(), "file with mutagenesis CSV data")
 		("mutagenesis.num-seriation-neighbours", value<int>()->default_value(0), "how many neighbours to each side in seriation to include in output")
 		;

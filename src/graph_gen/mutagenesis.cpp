@@ -5,10 +5,12 @@
 #include	<sstream>
 #include	<vector>
 #include	<list>
+#include    <map>
 #include	<factory/factory.h>
 #include	<boost/algorithm/string.hpp>
 #include	<boost/lexical_cast.hpp>
 #include    <boost/numeric/ublas/matrix.hpp>
+#include    <boost/numeric/ublas/matrix_proxy.hpp>
 #include	<matlab_io.hpp>
 
 #include	<configuration.hpp>
@@ -35,6 +37,14 @@ struct Mutagenesis::Impl{
 	string getPrologDescription(int idx,const Serialization&);
 	string getPlainDescription(int idx,const Serialization&);
 
+	double kernelNull(int i, int j);
+	double kernelTypeAndWeightEq(int i, int j);
+	double kernelTypeSum(int i, int j);
+	double kernelNienhuysCheng(int i, int j);
+
+	double (Mutagenesis::Impl:: *mKernel)(int, int);
+	
+	boost::shared_ptr<AdjMat::AdjMatT> mA_ptr;
 	vector<string> mNames;
 	vector<string> mTypes;
 	vector<string> mParam1;
@@ -42,8 +52,49 @@ struct Mutagenesis::Impl{
 	string         mName;
 };
 
+double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j){
+	double d = 0.0;
+	int    n = 0;
+	if(mTypes[i]  == mTypes[j])  d+=1; n++;
+	if(mParam1[i] == mParam1[j]) d+=1; n++;
+	return d/(2*n);
+}
+double Mutagenesis::Impl::kernelTypeSum(int i, int j){
+	double d = 0.0;
+	map<string, double> m;
+	m["n"]  = 0.3;
+	m["f"]  = 0.3;
+	m["cl"] = 0.3;
+	m["o"]  = 0.2;
+	m["h"]  = 0.1;
+	m["c"]  = 0.4;
+
+	d += m[mTypes[i]] + m[mTypes[j]];
+
+	return d;
+}
+double Mutagenesis::Impl::kernelTypeAndWeightEq(int i, int j){
+	double d = 0.0;
+	if(mTypes[i] == mTypes[j]) d+=0.25;
+	if(mParam1[i] == mParam1[j]) d+=0.25;
+	return d;
+}
+double Mutagenesis::Impl::kernelNull(int i, int j){
+	return 0.0;
+}
 string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s){
-	return mTypes[s[ser_idx]];
+	stringstream str;
+	AdjMat::AdjMatT& A = *mA_ptr;
+	int idx = s[ser_idx];
+	str << mTypes[idx]<<"[";
+	ublas::vector<double> col = ublas::column(A,idx);
+	for(int i=0;i<A.size1();i++){
+		if(i==idx)              continue;
+		if(col(i) < 0.0001)     continue;
+			str << mTypes[i];
+	}
+	str<< "]";
+	return str.str();
 }
 string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s){
 	unsigned int idx = s[ser_idx];
@@ -63,14 +114,21 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 	}
 	int maxNeigh = gCfg().getInt("mutagenesis.num-seriation-neighbours");
 	for(int i=-maxNeigh;i<=maxNeigh;i++){
-		if(i==0)           continue;
+		if(i==0)                continue;
 		int nidx = idx+i;              // nidx: position of neighbour in serialization
-		if(nidx<0)         continue;
-		if(nidx>=s.size()) continue;
+		if(nidx<0)              continue;
+		if(nidx>=(int)s.size()) continue;
 		int idx = s[nidx];             // idx: original position of neighbour
 		if(mTypes[idx]!="b"){
 			o << ";neighChemAtom("<<mTypes[idx]<<")";
 		}
+	}
+	AdjMat::AdjMatT& A = *mA_ptr;
+	ublas::vector<double> col = ublas::column(A,idx);
+	for(int i=0;i<A.size1();i++){
+		if(i==idx)              continue;
+		if(col(i) < 0.0001)     continue;
+			o << ";graphNeigh("<<mTypes[i]<<")";
 	}
 	return o.str();
 }
@@ -90,7 +148,6 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 	vector<string> param1;
 	vector<string> param2;
 	int n = -1;
-	boost::shared_ptr<AdjMat::AdjMatT> A_ptr;
 
 	getline(mInputStream, line);
 	mName = line;
@@ -104,11 +161,11 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 			list<string>::iterator it = strvec.begin();
 			copy(it,strvec.end(),back_inserter(names));
 			n = names.size();
-			A_ptr.reset(new ublas::matrix<double>(n,n));
+			mA_ptr.reset(new ublas::matrix<double>(n,n));
 			cnt++;
 			continue;
 		}
-		AdjMat::AdjMatT& A = *A_ptr;
+		AdjMat::AdjMatT& A = *mA_ptr;
 		if(A.size1() != strvec.size()-addParams){
 			if(cnt-1 == n)
 				break;
@@ -123,16 +180,27 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 		param2.push_back( *it ); it++;
 		for(int i=0;it!=strvec.end();it++,i++){
 			int val = boost::lexical_cast<double>(*it);
-			A(i,cnt-1) = A(cnt-1,i) = val>0 ? 1:0;
+			A(i,cnt-1) = A(cnt-1,i) = (val>0 ? 1:0);
 		}
 		cnt++;
 	}
-	ProbAdjPerm prob;
-	prob.setAdjMat(A_ptr);
 	mNames = names;
 	mTypes = types;
 	mParam1 = param1;
 	mParam2 = param2;
+
+	if(n>0){
+		AdjMat::AdjMatT& A = *mA_ptr;
+		for(int i=0;i<n;i++)
+			for(int j=i+1;j<n;j++)
+				if(A(i,j)>0.001){
+					A(i,j) = A(j,i) = A(i, j) - 0.5*(this->*mKernel)(i,j);
+				}
+	}
+
+	ProbAdjPerm prob;
+	prob.setAdjMat(mA_ptr);
+
 	return prob;
 }
 
@@ -159,6 +227,19 @@ Mutagenesis::~Mutagenesis()
 }
 void Mutagenesis::configure()
 {
+	AdjMatGen::configure();
+	string kernel = gCfg().getString("mutagenesis.kernel");
+	if(0);
+	else if(kernel == "kernelNull")
+		mImpl->mKernel = &Impl::kernelNull;
+	else if(kernel == "kernelTypeAndWeightEq")
+		mImpl->mKernel = &Impl::kernelTypeAndWeightEq;
+	else if(kernel == "kernelTypeSum")
+		mImpl->mKernel = &Impl::kernelTypeSum;
+	else if(kernel == "kernelNienhuysCheng")
+		mImpl->mKernel = &Impl::kernelNienhuysCheng;
+	else
+		throw runtime_error("Mutagenesis: Supplied kernel unknown");
 	mImpl->mInputFilename = gCfg().getString("mutagenesis.in-file");
 	mImpl->open();
 }
