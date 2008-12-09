@@ -1,4 +1,5 @@
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include "ProbData.hpp"
 
 
@@ -25,12 +26,14 @@ void ProbAdjLapPerm::calculateLaplacian()
 	for(int i=0; i<n; i++){
 		int sum = 0;
 		for (int j=0;j<n;j++)
-			sum += adj(i,j)>0 ? 1 : 0;
+			sum += adj(i,j);
 		deg_vec(i) = sum;
 	}
-	//diagonal_matrix<double> deg(n, deg_vec.data());
+	ublas::diagonal_matrix<double> deg(n, deg_vec.data());
 	boost::shared_ptr<Laplacian::LaplacianT> L_ptr( new Laplacian::LaplacianT(n,n) );
 	Laplacian::LaplacianT& L = *L_ptr;
+	L = deg-adj;
+	/*
 	for(int u=0;u<n;u++)
 		for(int v=0;v<n;v++)
 		{
@@ -41,6 +44,7 @@ void ProbAdjLapPerm::calculateLaplacian()
 			else
 				L(u,v) = 0;
 		}
+	*/
 	setLaplacian(L_ptr);
 }
 ProbAdjLapPerm::ProbAdjLapPerm(const ProbAdjPerm& p)
