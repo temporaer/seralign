@@ -13,33 +13,22 @@ $stats_AB = Statistics::Descriptive::Full->new();
 $stats_AA = Statistics::Descriptive::Full->new();
 $stats_BB = Statistics::Descriptive::Full->new();
 
-foreach $a (@ar1){
-	foreach $b(@ar2){
-		$align->align($a,$b);
-		$stats_AB->add_data($align->total_score);
-	}
-}
-foreach $a (@ar1){
-	foreach $b(@ar1){
-		next if($a==$b);
-		$align->align($a,$b);
-		$stats_AA->add_data($align->total_score);
-	}
-}
-foreach $a (@ar2){
-	foreach $b(@ar2){
-		next if($a==$b);
+@sim_mat = ();
+foreach $a (@ar1, @ar2){
+	@sim_row = ();
+	foreach $b(@ar1, @ar2){
 		$align->align($a,$b);
 		$stats_BB->add_data($align->total_score);
+		push @sim_row, $align->total_score;
 	}
+	push @sim_mat, [@sim_row];
 }
 
-
-$mAB = $stats_AB->mean();
-$mAA = $stats_AA->mean();
-$mBB = $stats_BB->mean();
-
-print "AB=$mAB AA=$mAA BB=$mBB\n";
+print join(',', map{"w$_"} (0..(scalar(@ar1)+scalar(@ar2)))), "\n";
+foreach $r (@sim_mat){
+	@r = @$r;
+	print join(',',@r),"\n";
+}
 
 
 sub getAsArr{
