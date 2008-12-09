@@ -51,7 +51,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 find_package(PCHSupport QUIET)
 
 # Boost
-find_package( Boost 1.35 COMPONENTS program_options filesystem )
+find_package( Boost 1.35 COMPONENTS program_options filesystem system )
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} configuration )
 
