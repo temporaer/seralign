@@ -165,8 +165,8 @@ Serialization SDPSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 
 	ublas::vector<double> x = best_y;
 
-	return readout_connected(x,adj);
-	//return readout_plain(x,adj);
+	//return readout_connected(x,adj);
+	return readout_plain(x,adj);
 }
 
 #   define BEST_ELEM(X) max_element(X.begin(),X.end())
