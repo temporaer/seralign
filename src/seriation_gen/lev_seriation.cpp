@@ -43,13 +43,13 @@ Serialization LEVSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	LG(isVerbose(),"Determine eigenvalues of laplacian\n");
 	ublas::matrix<double,ublas::column_major> Eigv(L);
 	ublas::vector<double> lambda(n);
-	ublas::vector<double>::iterator max_lambda;
-	int max_lambda_idx=0;
+	ublas::vector<double>::iterator best_lambda;
+	int best_lambda_idx=0;
 
 	lapack::syev( 'V', 'L', Eigv, lambda, lapack::minimal_workspace() );
-	max_lambda = max_element(lambda.begin(),lambda.end());
-	max_lambda_idx = std::distance(lambda.begin(),max_lambda);
-	ublas::vector<double> leading = ublas::column(Eigv,max_lambda_idx);
+	best_lambda = min_element(lambda.begin(),lambda.end());
+	best_lambda_idx = std::distance(lambda.begin(),best_lambda);
+	ublas::vector<double> leading = ublas::column(Eigv,best_lambda_idx);
 	//ublas::vector<double> leading = ublas::column(Eigv,0);
 
 	LG(isVerbose(),"eigenvalue-readout\n");
