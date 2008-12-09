@@ -54,7 +54,7 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm&
 		for(unsigned int j=i;j<n;j++)
 		{
 			if(A(i,j)>0.0001){
-				mOS << "  n"<<i<<" -- n"<<j<<" ;"<<endl;
+				mOS << "  n"<<i<<" -- n"<<j<<" [weight="<<A(i,j)<<"];"<<endl;
 			}
 		}
 	seqfoot();
