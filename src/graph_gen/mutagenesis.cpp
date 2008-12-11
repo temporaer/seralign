@@ -43,6 +43,9 @@ struct Mutagenesis::Impl{
 	double kernelNienhuysCheng(int i, int j);
 
 	double (Mutagenesis::Impl:: *mKernel)(int, int);
+
+	bool mIncludeGraphNeighbours;
+	int  mNumSequenceNeighbours;
 	
 	boost::shared_ptr<AdjMat::AdjMatT> mA_ptr;
 	vector<string> mNames;
@@ -85,13 +88,12 @@ double Mutagenesis::Impl::kernelNull(int i, int j){
 string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s){
 	stringstream str;
 	AdjMat::AdjMatT& A = *mA_ptr;
-	int idx = s[ser_idx];
+	unsigned int idx = s[ser_idx];
 	str << mTypes[idx];
-	bool incGraphNeigh = gCfg().getBool("mutagenesis.include-graph-neighbours");
-	if(incGraphNeigh){
+	if(mIncludeGraphNeighbours){
 		str << "[";
 		ublas::vector<double> col = ublas::column(A,idx);
-		for(int i=0;i<A.size1();i++){
+		for(unsigned int i=0;i<A.size1();i++){
 			if(i==idx)              continue;
 			if(col(i) < 0.0001)     continue;
 				str << mTypes[i];
@@ -116,8 +118,7 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 		o << "chemAtom(" << mTypes[idx] << ")";
 		o << ";weight(" << mParam1[idx] << ")";
 	}
-	int maxNeigh = gCfg().getInt("mutagenesis.num-seriation-neighbours");
-	for(int i=-maxNeigh;i<=maxNeigh;i++){
+	for(int i=-mNumSequenceNeighbours;i<=mNumSequenceNeighbours;i++){
 		if(i==0)                continue;
 		int nidx = idx+i;              // nidx: position of neighbour in serialization
 		if(nidx<0)              continue;
@@ -127,11 +128,10 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 			o << ";neighChemAtom("<<mTypes[idx]<<")";
 		}
 	}
-	bool incGraphNeigh = gCfg().getBool("mutagenesis.include-graph-neighbours");
-	if(incGraphNeigh){
+	if(mIncludeGraphNeighbours){
 		AdjMat::AdjMatT& A = *mA_ptr;
 		ublas::vector<double> col = ublas::column(A,idx);
-		for(int i=0;i<A.size1();i++){
+		for(unsigned int i=0;i<A.size1();i++){
 			if(i==idx)              continue;
 			if(col(i) < 0.0001)     continue;
 			o << ";graphNeigh("<<mTypes[i]<<")";
@@ -247,6 +247,8 @@ void Mutagenesis::configure()
 		mImpl->mKernel = &Impl::kernelNienhuysCheng;
 	else
 		throw runtime_error("Mutagenesis: Supplied kernel unknown");
+	mImpl->mIncludeGraphNeighbours = gCfg().getBool("mutagenesis.include-graph-neighbours");
+	mImpl->mNumSequenceNeighbours  = gCfg().getInt ("mutagenesis.num-seriation-neighbours");
 	mImpl->mInputFilename = gCfg().getString("mutagenesis.in-file");
 	mImpl->open();
 }
