@@ -46,6 +46,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/prob_dt
 	${CMAKE_SOURCE_DIR}/tools
 	${CMAKE_SOURCE_DIR}/seriation_gen
+	${CMAKE_SOURCE_DIR}/third_party/seqan
 	)
 
 #ADD_EXECUTABLE(          t_randadjmat ${SRC} )
@@ -96,3 +97,7 @@ ADD_TEST(t_degreesort ./t_degreesort)
 ADD_EXECUTABLE(t_origidx t_origidx.cpp)                                                                                       
 TARGET_LINK_LIBRARIES ( t_origidx ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
 ADD_TEST(t_origidx ./t_origidx) 
+
+ADD_EXECUTABLE(t_seqan t_seqan.cpp)                                                                                       
+TARGET_LINK_LIBRARIES ( t_seqan ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
+ADD_TEST(t_seqan ./t_seqan) 
