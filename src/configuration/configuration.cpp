@@ -1,5 +1,5 @@
 /*       Created   :  10/03/2008 09:37:53 PM
- *       Last Change: Sat Dec 06 01:00 PM 2008 CET
+ *       Last Change: Thu Dec 11 11:00 AM 2008 CET
  */
 
 
@@ -57,9 +57,9 @@ class Configuration::Configuration_Impl{
 
 
 Configuration::Configuration_Impl::Configuration_Impl()
-	:mGeneric ("---------- Generic Options ----------")
-	 ,mConfig ("---------- General Config Options ----------")
-	 ,mCmdLine("---------- Commandline Options ----------")
+	:mGeneric ("========== Generic Options =================")
+	 ,mConfig ("========== General Config Options ==========")
+	 ,mCmdLine("========== Commandline Options =============")
 	 ,mVisible("Allowed Options")
 	 ,mHidden ("Hidden Options")
 	 ,mVerbose(false)

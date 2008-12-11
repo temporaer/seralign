@@ -11,7 +11,7 @@ class AdjMatGenCfg{
 };
 
 AdjMatGenCfg::AdjMatGenCfg(){
-	options_description od("---------- Adjacency Matrix Generation ----------");
+	options_description od("========== Adjacency Matrix Generation ==========");
 	od.add_options()
 		("adjmat_gen.verbose", value<bool>()->default_value(false), "Whether to be verbose")
 		;

@@ -1,5 +1,5 @@
 /*       Created   :  10/07/2008 09:04:23 PM
- *       Last Change: Sat Dec 06 01:00 PM 2008 CET
+ *       Last Change: Thu Dec 11 11:00 AM 2008 CET
  */
 
 #include <configuration.hpp>
@@ -14,7 +14,7 @@ struct SeriationGenCfg{
 };
 
 SeriationGenCfg::SeriationGenCfg(){
-	options_description od("---------- Seriation Generator Options ----------");
+	options_description od("========== Seriation Generator Options ==========");
 	od.add_options()
 		("ser-gen.verbose",value<bool>()->default_value(false),"verbose seriation generation output")
 		("ser-gen.sdp-wrapper,w",value<string>()->default_value("SDPAWrapper"),"Which SDP-Solver to use")

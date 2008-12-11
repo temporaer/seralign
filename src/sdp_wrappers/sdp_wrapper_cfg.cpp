@@ -1,5 +1,5 @@
 /*       Created   :  10/07/2008 12:08:01 PM
- *       Last Change: Sat Dec 06 01:00 PM 2008 CET
+ *       Last Change: Thu Dec 11 11:00 AM 2008 CET
  */
 
 #include <configuration.hpp>
@@ -13,7 +13,7 @@ struct SDPWrapperCfg{
 using namespace boost::program_options;
 using namespace std;
 SDPWrapperCfg::SDPWrapperCfg(){
-	options_description OD("---------- SDP-Wrapper options ----------");
+	options_description OD("========== SDP-Wrapper options ==========");
 	OD.add_options()
 		("sdp-wrapper.verbose",value<bool>()->default_value(false), "Whether sdp-wrapper should be verbose")
 		;
