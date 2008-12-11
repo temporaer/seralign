@@ -86,14 +86,18 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s)
 	stringstream str;
 	AdjMat::AdjMatT& A = *mA_ptr;
 	int idx = s[ser_idx];
-	str << mTypes[idx]<<"[";
-	ublas::vector<double> col = ublas::column(A,idx);
-	for(int i=0;i<A.size1();i++){
-		if(i==idx)              continue;
-		if(col(i) < 0.0001)     continue;
-			str << mTypes[i];
+	str << mTypes[idx];
+	bool incGraphNeigh = gCfg().getBool("mutagenesis.include-graph-neighbours");
+	if(incGraphNeigh){
+		str << "[";
+		ublas::vector<double> col = ublas::column(A,idx);
+		for(int i=0;i<A.size1();i++){
+			if(i==idx)              continue;
+			if(col(i) < 0.0001)     continue;
+				str << mTypes[i];
+		}
+		str<< "]";
 	}
-	str<< "]";
 	return str.str();
 }
 string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s){
@@ -123,12 +127,15 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 			o << ";neighChemAtom("<<mTypes[idx]<<")";
 		}
 	}
-	AdjMat::AdjMatT& A = *mA_ptr;
-	ublas::vector<double> col = ublas::column(A,idx);
-	for(int i=0;i<A.size1();i++){
-		if(i==idx)              continue;
-		if(col(i) < 0.0001)     continue;
+	bool incGraphNeigh = gCfg().getBool("mutagenesis.include-graph-neighbours");
+	if(incGraphNeigh){
+		AdjMat::AdjMatT& A = *mA_ptr;
+		ublas::vector<double> col = ublas::column(A,idx);
+		for(int i=0;i<A.size1();i++){
+			if(i==idx)              continue;
+			if(col(i) < 0.0001)     continue;
 			o << ";graphNeigh("<<mTypes[i]<<")";
+		}
 	}
 	return o.str();
 }
