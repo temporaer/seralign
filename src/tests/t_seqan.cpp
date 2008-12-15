@@ -16,10 +16,11 @@ struct Fixture{
 	}
 };
 
-struct Zeichen : SimpleType<int, int> {
+struct Zeichen {
 	int i;
 	Zeichen(const char& c){i =c;}
 	Zeichen(){}
+	operator unsigned char () const { return '0'+i;}
 };
 bool operator==(Zeichen const & z, Zeichen const & y){ return z.i == y.i;}
 
@@ -31,18 +32,23 @@ score( Score<int, Zeichen> const & me,
 	return 0.0;
 } 
 
-struct MyScore{
-
-};
-
 BOOST_FIXTURE_TEST_SUITE( suite, Fixture )
 
 BOOST_AUTO_TEST_CASE( test1 )
 {
 	 Align<String<Zeichen> > ali;
-	 appendValue(rows(ali), "aphilologicaltheorem");
-	 appendValue(rows(ali), "bizarreamphibology");
-	 int score = localAlignment(ali, MyScore(), SmithWaterman());
+	 String<Zeichen> x,y;
+	 appendValue(x, Zeichen(1));
+	 appendValue(x, Zeichen(2));
+	 appendValue(x, Zeichen(3));
+	 appendValue(x, Zeichen(4));
+	 appendValue(y, Zeichen(1));
+	 appendValue(y, Zeichen(5));
+	 appendValue(y, Zeichen(3));
+	 appendValue(y, Zeichen(4));
+	 appendValue(rows(ali), x);
+	 appendValue(rows(ali), y);
+	 int score = localAlignment(ali, Score<int>(3,0,1), SmithWaterman());
 	 cout << "Score = " << score << endl;
 	 cout << ali; 
 	 BOOST_CHECK_EQUAL(19,score);
