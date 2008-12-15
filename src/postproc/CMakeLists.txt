@@ -12,6 +12,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/seriation_gen
 	${CMAKE_SOURCE_DIR}/prob_dt
 	${CMAKE_SOURCE_DIR}/tools
+	${CMAKE_SOURCE_DIR}/third_party/seqan
 	)
 
 SET(SRC 
@@ -19,6 +20,7 @@ SET(SRC
 	RealXMLPrint.cpp RealXMLPrint.hpp
 	GraphVizPrint.cpp GraphVizPrint.hpp
 	PlainPrinter.cpp   PlainPrinter.hpp
+	localign_distmat.cpp localign_distmat.hpp
 		)
 
 add_library( postproc SHARED ${SRC} )
