@@ -47,6 +47,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/tools
 	${CMAKE_SOURCE_DIR}/seriation_gen
 	${CMAKE_SOURCE_DIR}/third_party/seqan
+	${CMAKE_SOURCE_DIR}/third_party/maart
 	)
 
 #ADD_EXECUTABLE(          t_randadjmat ${SRC} )
@@ -73,6 +74,10 @@ IF(CSDP_FOUND)
 	TARGET_LINK_LIBRARIES ( t_csdp_wrapper ${Boost_LIBRARIES} ${NANA_LIBRARIES} hrconfig sdp_wrappers )                                   
 	ADD_TEST(t_csdp_wrapper ./t_csdp_wrapper --catch_system_errors=no )                                                                
 ENDIF(CSDP_FOUND)
+
+ADD_EXECUTABLE(t_fastmap t_fastmap.cpp)
+TARGET_LINK_LIBRARIES ( t_fastmap ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} maartutils )
+ADD_TEST(t_fastmap ./t_fastmap --catch_system_errors=no )
 
 ADD_EXECUTABLE(t_sdp_ser_gen t_sdp_seriation_gen.cpp)
 TARGET_LINK_LIBRARIES ( t_sdp_ser_gen ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig hrtools prob_dt seriation_gen sdp_wrappers graph_gen )
