@@ -55,10 +55,11 @@ def getBond(graphs,example,atomsName1,atomsName2):
     return '0'
     
 
-def toCSV(graphs,example,sorting=None):
+def toCSV(graphs,example,klass,sorting=None):
     if not sorting:
         sorting = graphs[example]['atoms'].keys()
     retString  = example + '\n'
+    retString += klass + '\n'
     retString += string.join(map(lambda x: '%s' % x,['None','None','None','None']+sorting),',')+'\n'
     #retString = 'None,' + string.join(map(lambda x: '%s_%s' % (graphs[example]['atoms'][x][2],x),sorting),',')+'\n'
     for atom in sorting:
@@ -95,10 +96,10 @@ for file in files:
 		try:
 			p = pos[k]
 			if p:
-				posfile.write(toCSV(graphs,k))
+				posfile.write(toCSV(graphs,k,"pos"))
 				posfile.write("\n")
 			else:
-				negfile.write(toCSV(graphs,k))
+				negfile.write(toCSV(graphs,k,"neg"))
 				negfile.write("\n")
 		except:
 			continue
