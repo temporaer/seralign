@@ -3,12 +3,14 @@
 #include <fstream>
 #include <factory/factory.h>
 #include <cstdio>
+#include <cstring>
 
 #include <configuration.hpp>
 #include <sdp_wrapper.hpp>
 #include <adjmat_gen.hpp>
 
 
+#include <progressbar.hpp>
 #include <SerGenAdj.hpp>
 
 #include <DegreeSort.hpp>
@@ -50,8 +52,13 @@ void Serialize::operator()()
 
 	out_ptr->atStart();
 	int cnt=0;
+	bool verbose    = gCfg().getBool("verbose");
+	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
+	
+	ProgressBar pb(max_num==0?100:max_num, "serializing");
 	while(true){
-		L("Action::Serialize %03d: Generating...\n", cnt);
+		if(nonverbose) { pb.inc();                                          }
+		if(verbose)    { L("Action::Serialize %03d: Generating...\n", cnt); }
 		ProbAdjPerm tmp =  (*adjmat_gen)() ;
 		ProbAdjLapPerm prob ( tmp );
 		if(!adjmat_gen->hasNext())
@@ -66,17 +73,18 @@ void Serialize::operator()()
 		}
 		prob.calculateLaplacian();
 
-		L("Action::Serialize %03d: Serializing...\n", cnt);
+		if(verbose){ L("Action::Serialize %03d: Serializing...\n", cnt);}
 		Serialization randwalk;
 		randwalk = (*seriation_gen)(prob);
 
-		L("Action::Serialize %03d: Postprocessing...\n", cnt);
+		if(verbose){ L("Action::Serialize %03d: Postprocessing...\n", cnt);}
 		out_ptr->atSeriation(*adjmat_gen, randwalk, prob);
 
 		cnt++;
 		if(cnt == max_num)
 			break;
 	}
+	pb.finish();
 	out_ptr->atEnd();
 }
 
