@@ -32,6 +32,10 @@ string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&)
 	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 
 }
 
+int AdjMatGen::getClassID()
+{
+	return 0;
+}
 string AdjMatGen::getGraphID()
 {
 	throw runtime_error("AdjMatGen::getGraphID() not implemented for subclass"); 

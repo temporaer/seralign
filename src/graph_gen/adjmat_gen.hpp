@@ -17,6 +17,7 @@ class AdjMatGen{
 		virtual ProbAdjPerm operator()();  ///< generate a adjacency matrix
 		virtual ~AdjMatGen();              ///< virtual destructor
 		virtual bool hasNext();            ///< whether there are more adjacency-matrices available.
+		virtual int getClassID();          ///< which class the graph belongs to
 
 		/// get a description of the node content in the form of a prolog program
 		virtual std::string getPrologDescription(int ser_idx, const Serialization& s);

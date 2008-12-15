@@ -31,6 +31,7 @@ class Mutagenesis :public AdjMatGen
 	virtual std::string getPrologDescription(int ser_idx,const Serialization&);
 	virtual std::string getPlainDescription(int ser_idx,const Serialization&);
 	virtual std::string getGraphID();
+	virtual int         getClassID();
 
 	void setInputFilename(std::string&);
 	void open();

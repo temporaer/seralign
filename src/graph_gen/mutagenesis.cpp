@@ -53,6 +53,7 @@ struct Mutagenesis::Impl{
 	vector<string> mParam1;
 	vector<string> mParam2;
 	string         mName;
+	int            mClassID;
 };
 
 double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j){
@@ -92,12 +93,15 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s)
 	str << mTypes[idx];
 	if(mIncludeGraphNeighbours){
 		str << "[";
+		string s = "";
 		ublas::vector<double> col = ublas::column(A,idx);
 		for(unsigned int i=0;i<A.size1();i++){
 			if(i==idx)              continue;
 			if(col(i) < 0.0001)     continue;
-				str << mTypes[i];
+				s += mTypes[i];
 		}
+		sort(s.begin(),s.end());
+		str << s;
 		str<< "]";
 	}
 	return str.str();
@@ -158,6 +162,8 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 
 	getline(mInputStream, line);
 	mName = line;
+	getline(mInputStream, line);
+	mClassID = (line == "pos") ? 1 : 0;
 
 	while(line.length()>1 && getline(mInputStream, line)){
 		list<string> strvec;
@@ -275,6 +281,10 @@ string Mutagenesis::getPrologDescription(int ser_idx,const Serialization& s)
 std::string Mutagenesis::getGraphID()
 {
 	return mImpl->mName;
+}
+int Mutagenesis::getClassID()
+{
+	return mImpl->mClassID;
 }
 
 
