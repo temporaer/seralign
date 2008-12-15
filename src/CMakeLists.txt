@@ -51,7 +51,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 find_package(PCHSupport QUIET)
 
 # Boost
-find_package( Boost 1.35 COMPONENTS program_options filesystem system )
+find_package( Boost 1.35 COMPONENTS program_options filesystem system regex )
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} configuration )
 
@@ -105,6 +105,8 @@ ADD_SUBDIRECTORY( sdp_wrappers )
 ADD_SUBDIRECTORY( graph_gen )
 ADD_SUBDIRECTORY( seriation_gen )
 ADD_SUBDIRECTORY( postproc )
+ADD_SUBDIRECTORY( third_party/maart/utility )
+ADD_SUBDIRECTORY( third_party/gnuplot-cpp )
 include_directories( 
   ${CMAKE_SOURCE_DIR}/tools
   ${CMAKE_SOURCE_DIR}/actions
