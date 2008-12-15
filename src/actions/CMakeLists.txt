@@ -14,6 +14,14 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/sdp_wrappers
 	${CMAKE_SOURCE_DIR}/tools
 	${CMAKE_SOURCE_DIR}/postproc
+	${CMAKE_SOURCE_DIR}/third_party/maart
+	${CMAKE_SOURCE_DIR}/third_party/gnuplot-cpp
 	)
 
-add_library( actions SHARED action_cfg.cpp action.hpp action.cpp serialize.hpp serialize.cpp )
+add_library( actions SHARED action_cfg.cpp 
+              action.hpp    action.cpp 
+			  serialize.hpp serialize.cpp 
+			  fastmap_distancemat.hpp fastmap_distancemat.cpp 
+			  )
+
+target_link_libraries( actions maartutils gnuplotcpp )
