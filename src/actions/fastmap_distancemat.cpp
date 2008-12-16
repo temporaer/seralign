@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <utility/fastmap.h>
+#include <stats.hpp>
 #include <gnuplot_i.hpp>
 #include <map>
 
@@ -33,15 +34,46 @@ struct DistMatCSV{
 class D : public abstract_distance_functor<vector<float>, float>{
 	public:
 	DistMatP     mDistMat;
-	D(DistMatP p) : mDistMat(p) {}
-	virtual bool is_symmetric()const {return false;}
-	virtual bool zero_means_same() const {return true;}
+	double       mMin,mMax;
+
+	D(DistMatP p) : mDistMat(p) {
+		ExactDescriptiveStatistics stats("diststats");
+		unsigned int n = mDistMat->size1();
+
+		for(unsigned int i=0;i<mDistMat->size1();i++)
+			for(unsigned int j=0;j<mDistMat->size2();j++) {
+				if(i==j) continue;
+				stats += (*mDistMat)(i,j);
+			}
+		// make sure dist between 1 and 2 (for log())
+		(*mDistMat) += ublas::scalar_matrix<double>(n,n,-stats.getMin());
+		(*mDistMat) /= stats.getRange();
+		//(*mDistMat) += ublas::scalar_matrix<double>(n,n,1.0);
+		
+		stats.reset();
+		for(unsigned int i=0;i<mDistMat->size1();i++)
+			for(unsigned int j=0;j<mDistMat->size2();j++)
+			{
+				if(i==j) continue;
+				(*mDistMat)(i,j) = exp(-(*mDistMat)(i,j));
+				stats += (*mDistMat)(i,j);
+			}
+		cout << stats<<endl;
+		(*mDistMat) += ublas::scalar_matrix<double>(n,n,-stats.getMin());
+		(*mDistMat) /= stats.getRange();
+		mMin = 0;
+		mMax = 1;
+	}
+	virtual bool is_symmetric()const {return true;}
+	virtual bool zero_means_same() const {return false;}
+	double getDist(int i, int j)const{
+		if(i==j) return mMin;
+		return 1-exp(-(*mDistMat)(i,j));
+	}
 	virtual score_type operator() (const feature_type &i, const feature_type &j) const{
 		unsigned int a = round(i[0]);
 		unsigned int b = round(j[0]);
-		if(a==b) return 0;
-		double f = 1.f/((*mDistMat)(a,b));
-		return 0.1+f;
+		return   getDist(a,b);
 	}
 };
 
@@ -79,34 +111,10 @@ readDistanceMatrixCSVWithNameCol(const char* fn){
 	is.close();
 	return csv;;
 }
-DistMatCSV
-readDistanceMatrixCSV(const char* fn){
-	ifstream is(fn);
-	string line;
-	getline(is,line);
-	trim(line);
-	DistMatCSV csv;
-	split( csv.headers, line, boost::is_any_of(",") );
-	unsigned int n = csv.headers.size();
-	DistMatP distmat_ptr( new DistMatT(n,n) );
-	DistMatT& distmat = *distmat_ptr;
-
-	vector<string> vals;
-	for(unsigned int i=0;i<n; i++){
-		getline(is,line); trim(line);
-		split( vals, line, boost::is_any_of(",") );
-		I(vals.size() == n);
-		for(unsigned int j=0;j<n;j++){
-			distmat(i,j) = boost::lexical_cast<double>(vals[j]);
-		}
-	}
-	csv.mat = distmat_ptr;
-	is.close();
-	return csv;;
-}
 
 void FastmapDistancemat::operator()()
 {
+	Gnuplot gp;
 	vector<string> dmfns = gCfg().get<vector<string> >("fastmap.matrices");
 	BOOST_FOREACH(string& dmfn, dmfns){
 		DistMatCSV dm = readDistanceMatrixCSVWithNameCol(dmfn.c_str());
@@ -139,15 +147,15 @@ void FastmapDistancemat::operator()()
 			os << endl;
 		}
 		os.close();
-		Gnuplot gp;
-		//gp.cmd("set terminal png giant size 1024,768");
-		gp.cmd("set terminal png giant size");
+		gp.cmd("set title \"Fastmap of Distance Matrix\"");
+		gp.cmd("set terminal png giant size 1024,768");
 		gp.cmd("set view 0,0");
-		gp.cmd("set pointsize 0.1 ");
-		gp.cmd("set palette defined ( 10 \"#ff0000\", 90 \"#00ff00\" )");
+		gp.cmd("unset border");
+		gp.cmd("unset colorbox");
+		gp.cmd("set pointsize 1 ");
+		gp.cmd("set palette defined ( 10 \"#ff0000\", 90 \"#0000ff\" )");
 		gp.cmd("set output \"" + plotfile + ".png\"");
-		gp.cmd("splot \""+outfilename+"\" using 1:2:3 w p palette t \"" + dmfn +"\"");
-		//gp.plotfile_xy(outfilename, 1, 2, outfilename);
+		gp.cmd("splot \""+outfilename+"\" using 1:2:3 w p pt 7 palette t \"" + dmfn +"\"");
 	}
 }
 
