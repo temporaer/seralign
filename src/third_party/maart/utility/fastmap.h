@@ -53,6 +53,8 @@ template <class T>
 class fastmap {
   public:
     typedef T object_t;
+    typedef std::vector<float>        mapped_obj_t;
+    typedef std::vector<mapped_obj_t> mapped_objs_t;
     typedef std::vector< object_t > objects_t; // Define what a collection of objects is made of
 
     typedef float scoreT; // The result of a distance comparison
@@ -67,17 +69,21 @@ class fastmap {
 
     // Stores the ids of the pivot objects - one pair per recursive call [2 x k pivot array PA[]]
     pivot_array_t pivot_array;
+	// whether pivot_array should be overwritten
+	bool          mPivotLocked;
 
     // At the end of the algorithm, the i-th row is the image of the i-th object [N x k array X[]]
-    objects_t X;
+    mapped_objs_t X;
+
 
   protected:
     const float fm_dist(const objects_t &objects, unsigned int a, unsigned int b, unsigned int p);
     void choose_distant_objects(const objects_t &objects, unsigned int *a, unsigned int *b, unsigned int p);
     void do_map(unsigned int k, const objects_t &objects, unsigned int column = 0);
+	inline void resetPivots(){mPivotLocked = false;}
 
   public:
-    fastmap() : distance_fn(NULL), progress_fn(NULL) { };
+    fastmap() : distance_fn(NULL), progress_fn(NULL), mPivotLocked(false) { };
 
     void set_distance_function(abstract_distance_functor<T, scoreT> const * fn) { distance_fn = fn; };
     const progress_fn_t set_progress_function(progress_fn_t fn) { progress_fn_t old = progress_fn; progress_fn = fn; return old; };
@@ -90,7 +96,7 @@ class fastmap {
 
     double evaluate_stress(const objects_t &objects, unsigned int k);
 
-    const objects_t &get_map() const { return X; };
+    const mapped_objs_t &get_map() const { return X; };
 };
 
 
@@ -210,8 +216,10 @@ void fastmap<T>::make_map(unsigned int k, const objects_t &objects)
     for (unsigned int n=0; n<objects.size(); n++)
       X[n].resize(k);
 
-    pivot_array.clear();
-    pivot_array.reserve(k);
+	if(!mPivotLocked){
+		pivot_array.clear();
+		pivot_array.reserve(k);
+	}
 
     do_map(k, objects);
 
@@ -245,7 +253,11 @@ void fastmap<T>::do_map(unsigned int k, const objects_t &objects, unsigned int c
 
     // 2) Choose pivot objects
     unsigned int a, b;
-    choose_distant_objects(objects, &a, &b, column);
+	if(mPivotLocked){
+		a = pivot_array[column].first;
+		b = pivot_array[column].second;
+	}else
+		choose_distant_objects(objects, &a, &b, column);
 
 #if DEBUG_LEVEL > 1
     DEBUG_STREAM << "Pivot objects choosen: a = " << a << ", b = " << b << std::endl;
@@ -287,6 +299,9 @@ void fastmap<T>::do_map(unsigned int k, const objects_t &objects, unsigned int c
     //    perpendicular to the line (Oa, Ob); the distance function D’()
     //    between two projections is given by Eq. 4
     do_map(k-1, objects, column+1);
+
+	// lock pivots when finished
+	if(column==0) mPivotLocked = true;
 }
 
 
