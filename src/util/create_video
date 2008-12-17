@@ -1,0 +1,1 @@
+mencoder mf:///tmp/dis*.png -mf w=800:h=600:fps=7:type=png -ovc lavc -lavcopts vcodec=mpeg4 -oac copy -o /tmp/output.avi
