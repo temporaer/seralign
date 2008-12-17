@@ -24,7 +24,6 @@ void SDPSeriationProbGen::operator()(SDPProb& prob)
 	int n = adj.size1();
 
 	// C = F_0
-	// negative, since we want to _minimize_ instead of maximize as in normal SDP
 	prob.C = adj;
 
 	// F_1
