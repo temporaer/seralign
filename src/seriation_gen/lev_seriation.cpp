@@ -5,6 +5,7 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/bindings/lapack/lapack.hpp>
 #include <factory/factory.h>
+#include <matlab_io.hpp>
 #include "lev_seriation.hpp"
 #include <nana.h>
 #undef C
@@ -47,14 +48,16 @@ Serialization LEVSeriationGen::Impl::operator()(const ProbAdjPerm& pap)
 	int best_lambda_idx=0;
 
 	lapack::syev( 'V', 'L', Eigv, lambda, lapack::minimal_workspace() );
-	best_lambda = min_element(lambda.begin(),lambda.end());
-	best_lambda_idx = std::distance(lambda.begin(),best_lambda);
+	//best_lambda     = min_element(lambda.begin(),lambda.end());   // lambdas are sorted!
+	//best_lambda_idx = std::distance(lambda.begin(),best_lambda);  // lambdas are sorted!
+	best_lambda_idx   = 1;                                          // 1==lambda_2==fiedler vector
 	ublas::vector<double> leading = ublas::column(Eigv,best_lambda_idx);
-	//ublas::vector<double> leading = ublas::column(Eigv,0);
 
 	LG(isVerbose(),"eigenvalue-readout\n");
+	//L("Best Lambda: %3.3f\n",lambda[best_lambda_idx]);
+	//matlab_vector_out(cout,"Lambdas",lambda);
+	//matlab_vector_out(cout,"Leading",leading);
 	return readout_plain(leading,*pap.getAdjMat());
-	//return readout_plain(lambda,*pap.getAdjMat());
 }
 
 #   define BEST_ELEM(X) max_element(X.begin(),X.end())
