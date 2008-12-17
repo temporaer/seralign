@@ -68,7 +68,7 @@ class D : public abstract_distance_functor<vector<float>, float>{
 	virtual bool zero_means_same() const {return false;}
 	double getDist(int i, int j)const{
 		if(i==j) return mMin;
-		return 1-exp(-(*mDistMat)(i,j));
+		return (*mDistMat)(i,j);
 	}
 	virtual score_type operator() (const feature_type &i, const feature_type &j) const{
 		unsigned int a = round(i[0]);
@@ -80,6 +80,9 @@ class D : public abstract_distance_functor<vector<float>, float>{
 DistMatCSV
 readDistanceMatrixCSVWithNameCol(const char* fn){
 	ifstream is(fn);
+	if(!is){
+		return DistMatCSV();
+	}
 	string line;
 	getline(is,line);
 	trim(line);
@@ -116,10 +119,15 @@ void FastmapDistancemat::operator()()
 {
 	Gnuplot gp;
 	vector<string> dmfns = gCfg().get<vector<string> >("fastmap.matrices");
+	reverse(dmfns.begin(),dmfns.end());
+	fastmap<vector<float> > fm; // use same pivots for all matrices
 	BOOST_FOREACH(string& dmfn, dmfns){
 		DistMatCSV dm = readDistanceMatrixCSVWithNameCol(dmfn.c_str());
+		if(dm.mat.get() == NULL){
+			L("ignoring %s...\n", dmfn.c_str());
+			continue;
+		}
 		D d(dm.mat);
-		fastmap<vector<float> > fm;
 		fm.set_distance_function(&d);
 		vector<vector<float> > dataset;
 		for(unsigned int i=0;i<dm.mat->size1(); i++)
