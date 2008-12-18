@@ -4,7 +4,7 @@ SET(Boost_ADDITIONAL_VERSIONS "1.34" "1.34.1" "1.35" "1.35.1" "1.36" "1.36.1" )
 
 # General stuff
 PROJECT(SerAlign CXX Fortran)
-SET(CMAKE_PROJECT_NAME "SerAlign REAL" )
+SET(CMAKE_PROJECT_NAME "SerAlign" )
 SET(SERALIGN_SCRIPT_DIR ${CMAKE_BINARY_DIR}/scripts)
 
 # find errors/eclipse auto-incl-dir discovery
@@ -14,8 +14,8 @@ SET(SERALIGN_SCRIPT_DIR ${CMAKE_BINARY_DIR}/scripts)
 # Packaging
 SET(CPACK_PACKAGE_NAME                SerAlign )
 SET(CPACK_PACKAGE_CONTACT             "Hannes Schulz <mail@hannes-schulz.de>" )
-SET(CPACK_PACKAGE_VERSION             0.1 )
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Serializes Graphs and Aligns the Strings" )
+SET(CPACK_PACKAGE_VERSION             0.3 )
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Experiments with Graph Seriation" )
 SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE i386 )
 SET(CPACK_DEBIAN_PACKAGE_PRIORITY     optional )
 INCLUDE(CPack)
@@ -51,7 +51,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 find_package(PCHSupport QUIET)
 
 # Boost
-find_package( Boost 1.35 COMPONENTS program_options filesystem system regex )
+find_package( Boost 1.35 COMPONENTS program_options filesystem system regex  REQUIRED )
 link_directories ( ${Boost_LIBRARY_DIRS} )
 include_directories ( ${Boost_INCLUDE_DIRS} configuration )
 
@@ -118,7 +118,7 @@ include_directories(
   )
 
 # subdirs: optional extensions
-ADD_SUBDIRECTORY( python_bindings EXCLUDE_FROM_ALL ) 
+#ADD_SUBDIRECTORY( python_bindings EXCLUDE_FROM_ALL ) 
 ADD_SUBDIRECTORY( tests EXCLUDE_FROM_ALL ) 
 
 # docs
@@ -132,12 +132,18 @@ endif(DOXYGEN_EXECUTABLE)
 
 MESSAGE(STATUS "Boost Libs: ${Boost_LIBRARIES} ${Boost_LIBRARY_DIRS}" )
 add_executable( hrmain main.cpp )
-add_custom_command (TARGET hrmain 
-	POST_BUILD COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q --exclude=third_party
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating tags" VERBATIM)
-add_custom_command (TARGET hrmain 
-	POST_BUILD COMMAND mkid --include "C C++"
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating global-tags" VERBATIM)
+FIND_PROGRAM( CTAGS_BINARY ctags )
+IF( CTAGS_BINARY )
+	add_custom_command (TARGET hrmain 
+		POST_BUILD COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q --exclude=third_party
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating tags" VERBATIM)
+ENDIF( CTAGS_BINARY )
+FIND_PROGRAM( MKID_BINARY mkid )
+IF( MKID_BINARY )
+	add_custom_command (TARGET hrmain 
+		POST_BUILD COMMAND mkid --include "C C++"
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating global-tags" VERBATIM)
+ENDIF( MKID_BINARY )
 target_link_libraries(hrmain 
 	${Boost_LIBRARIES}  
 	${NANA_LIBRARIES} 
