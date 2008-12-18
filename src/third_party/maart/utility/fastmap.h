@@ -25,10 +25,12 @@
 #ifndef maart_fastmap_h
 #define maart_fastmap_h
 
+#include <exception>
 #include <cassert>
 #include <vector>
 
 #include "utility/distance.h"
+#include <boost/foreach.hpp>
 
 
 namespace utility {
@@ -256,16 +258,17 @@ void fastmap<T>::do_map(unsigned int k, const objects_t &objects, unsigned int c
 	if(mPivotLocked){
 		a = pivot_array[column].first;
 		b = pivot_array[column].second;
-	}else
+	}else{
 		choose_distant_objects(objects, &a, &b, column);
+		// 3) Record the ids of the pivot objects
+		pivot_array.push_back(std::pair<unsigned int, unsigned int>(a, b));
+	}
 
 #if DEBUG_LEVEL > 1
     DEBUG_STREAM << "Pivot objects choosen: a = " << a << ", b = " << b << std::endl;
     DEBUG_STREAM << "Distance = " << fm_dist(objects, a, b, column) << std::endl;
 #endif
 
-    // 3) Record the ids of the pivot objects
-    pivot_array.push_back(std::pair<unsigned int, unsigned int>(a, b));
 
 
     // 4)
@@ -412,60 +415,9 @@ template <class T>
 const std::vector<float> fastmap<T>::map_object(const object_t &object)
 {
     std::vector<float> mapped;
+	throw std::runtime_error("not implemented");
     return mapped;
 }
-
-
-/**
- * Map a query into the n-dimensions using a previous FastMap analysis.
- *
- * @todo Might want to make this note if this query would have changed
- *       the mapping
- *
-void project_query(const string &queryfile, const objects_t &objects, const pivot_array_t &pivot_array, const string &querymap)
-{
-    const unsigned int k = pivot_array.size();
-
-    float low, high;
-
-    objects_t query;
-    if (!load(queryfile, &query, &low, &high, false))
-    {
-      cerr << "Unable to open text file " << queryfile << endl;
-//      return 1;
-    }
-
-    objects_t queryX;
-    // Initialise the array of mapped features
-    queryX.resize(query.size());
-    for (unsigned int n=0; n<query.size(); n++)
-      queryX[n].resize(k);
-
-    for (unsigned int n=0; n<k; n++)
-    {
-    	const unsigned int a = pivot_array[n].first;
-    	const unsigned int b = pivot_array[n].second;
-
-      const float dab = fm_dist(objects, dist, a, b, n);
-      for (unsigned int i=0; i<query.size(); i++)
-      {
-        // Project objects on line (Oa, Ob)
-//        const float dai = fm_dist(objects, dist, a, i, n);  // TODO - this needs to use queryX for i
-//        const float dbi = fm_dist(objects, dist, b, i, n);  // TODO - this needs to use queryX for i
-        const float dai = dist(objects[a], query[i]);
-        const float dbi = dist(objects[b], query[i]);
-
-        queryX[i][n] = ((dai*dai) + (dab*dab) - (dbi*dbi)) / (dab * 2.0);
-      }
-    }
-
-    if (!save(querymap, queryX))
-    {
-      cerr << "Unable to open text file for writing: " << querymap << endl;
-//      return 1;
-    }
-}
-*/
 
 
 }; //  End of the utility namespace
