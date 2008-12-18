@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( test1 )
 	 int score = localAlignment(ali, Score<int>(3,0,1), SmithWaterman());
 	 cout << "Score = " << score << endl;
 	 cout << ali; 
-	 BOOST_CHECK_EQUAL(19,score);
+	 BOOST_CHECK_EQUAL(11,score);
 }
 
 
