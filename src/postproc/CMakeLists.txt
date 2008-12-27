@@ -20,6 +20,7 @@ SET(SRC
 	RealXMLPrint.cpp RealXMLPrint.hpp
 	GraphVizPrint.cpp GraphVizPrint.hpp
 	PlainPrinter.cpp   PlainPrinter.hpp
+	PosTSVPrinter.cpp PosTSVPrinter.hpp
 	localign_distmat.cpp localign_distmat.hpp
 		)
 
