@@ -22,13 +22,13 @@ LocAlignDistmat::LocAlignDistmat()
 }
 void LocAlignDistmat::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
-	Serialization cpy = ser;
-	for(unsigned int i=0;i<ser.size();i++)
-		cpy[i] = prob.getOriginalIndex(ser[i]);
+	Serialization::RankT ranks(ser.getRanks().size());
+	for(unsigned int i=0;i<ranks.size();i++)
+		ranks[i] = prob.getOriginalIndex(ser.getRanks()[i]);
 	seqan::String<Node> str;
-	for(unsigned int i=0; i<cpy.size(); i++)
+	for(unsigned int i=0; i<ranks.size(); i++)
 	{
-		seqan::appendValue(str, Node(gen.getPlainDescription(i, cpy)));
+		seqan::appendValue(str, Node(gen.getPlainDescription(i, ranks)));
 	}
 	mGraphIDs.push_back(gen.getGraphID());
 	mStrings.push_back(str);

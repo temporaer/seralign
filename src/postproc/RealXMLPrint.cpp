@@ -37,14 +37,14 @@ void RealXMLPrint::atEnd()
 
 void RealXMLPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
-	Serialization cpy = ser;
-	for(unsigned int i=0;i<ser.size();i++)
-		cpy[i] = prob.getOriginalIndex(ser[i]);
+	Serialization::RankT ranks = ser.getRanks();
+	for(unsigned int i=0;i<ranks.size();i++)
+		ranks[i] = prob.getOriginalIndex(ser.getRanks()[i]);
 	seqhead(gen);
-	for(unsigned int i=0; i<cpy.size(); i++)
+	for(unsigned int i=0; i<ranks.size(); i++)
 	{
 		mOS	<<"    <atom>" <<endl
-			<<"      <symbol>" << gen.getPrologDescription(i,cpy) << "</symbol>" << endl
+			<<"      <symbol>" << gen.getPrologDescription(i,ranks) << "</symbol>" << endl
 			<<"      <label>none</label>"   <<endl
 			<<"    </atom>"<<endl;
 	}

@@ -19,10 +19,10 @@ PlainSerGen::~PlainSerGen()
 Serialization PlainSerGen::operator()(const ProbAdjPerm& pap)
 {
 	int n = pap.getAdjMat()->size1();
-	Serialization s = Serialization(n);
+	Serialization::RankT ranks(n);
 	for(int i=0;i<n;i++)
-		s[i]=i;
-	return s;
+		ranks[i]=i;
+	return Serialization(ranks);
 }
 
 void PlainSerGen::configure()

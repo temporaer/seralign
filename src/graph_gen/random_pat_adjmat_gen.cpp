@@ -170,12 +170,12 @@ bool RandomPatAdjmatGen::hasNext()
 
 string RandomPatAdjmatGen::getPlainDescription(int ser_idx, const Serialization&s)
 {
-	int idx = s[ser_idx];
+	int idx = s.getRanks()[ser_idx];
 	return mNodes[idx].part_of_pattern ? string("X") : string("_");
 }
 string RandomPatAdjmatGen::getPrologDescription(int ser_idx, const Serialization&s)
 {
-	int idx = s[ser_idx];
+	int idx = s.getRanks()[ser_idx];
 	stringstream str;
 	str	<<"xpos("<<(int)(mNodes[idx].x)<<");"
 		<<"ypos("<<(int)(mNodes[idx].y)<<")";

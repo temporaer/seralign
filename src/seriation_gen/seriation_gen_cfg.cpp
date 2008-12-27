@@ -1,5 +1,5 @@
 /*       Created   :  10/07/2008 09:04:23 PM
- *       Last Change: Thu Dec 11 11:00 AM 2008 CET
+ *       Last Change: Sat Dec 20 01:00 PM 2008 CET
  */
 
 #include <configuration.hpp>
@@ -26,9 +26,15 @@ SeriationGenCfg::SeriationGenCfg(){
 		("repetative-ser-gen.serializer", value<string>()->default_value("SDPSeriationGen"), "Which Serializer to call repeatedly")
 		("repetative-ser-gen.repetition_num", value<int>()->default_value(3), "How often to call the Serializer")
 		;
+	options_description gsg("  GDist Seriation Generator");
+	gsg.add_options()
+		("gdist-ser-gen.seriation_gen", value<string>()->default_value("LEVSeriationGen"), "Serializer used to determine start vertex in graph")
+		("gdist-ser-gen.normalize", value<bool>()->default_value(true), "Whether all distances should be confined btw [0,1]")
+		;
 
 	gCfg().addModuleOptions(od);
 	gCfg().addModuleOptions(rsg);
+	gCfg().addModuleOptions(gsg);
 }
 namespace{
 	SeriationGenCfg _tmp;

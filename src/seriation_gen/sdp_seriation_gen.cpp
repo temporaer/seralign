@@ -177,7 +177,7 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 	// tricky: make sure x > 0 at all times.
 	x += ublas::scalar_vector<double>(n, 1 - (*min_element(x.begin(),x.end())));
 
-	Serialization ret(n);
+	Serialization::RankT ranks(n);
 	std::vector<bool> done(n,false);
 
 	// find highest component of x
@@ -186,13 +186,13 @@ Serialization SDPSeriationGen::Impl::readout_plain(ublas::vector<double>& x,cons
 
 	L("Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
-		ret[i] = idx;
+		ranks[i] = idx;
 		done[idx] = true;
 		*it = 0.0; 
 		it = BEST_ELEM(x);
 		idx = std::distance(x.begin(),it);
 	}
-	return ret;
+	return Serialization(ranks);
 }
 
 Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,const AdjMat::AdjMatT& adj)
@@ -202,7 +202,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 	// tricky: make sure x > 0 at all times.
 	x += ublas::scalar_vector<double>(n, 1 - (*min_element(x.begin(),x.end())));
 
-	Serialization ret(n);
+	Serialization::RankT ranks(n);
 	std::vector<bool> done(n,false);
 
 	// find highest component of x
@@ -213,7 +213,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 	L("Determine Actual Path through Graph.\n");
 	for(unsigned int i=0;i<n;i++){
 		// mark as visited
-		ret[i] = idx;
+		ranks[i] = idx;
 		done[idx] = true;
 
 		// make sure we do not visit again
@@ -241,7 +241,7 @@ Serialization SDPSeriationGen::Impl::readout_connected(ublas::vector<double>& x,
 
 
 	}
-	return ret;
+	return Serialization(ranks);
 }
 
 

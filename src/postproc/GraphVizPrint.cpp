@@ -33,9 +33,9 @@ void GraphVizPrint::atEnd()
 
 void GraphVizPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
-	Serialization cpy = ser;
-	for(unsigned int i=0;i<ser.size();i++)
-		cpy[i] = prob.getOriginalIndex(ser[i]);
+	Serialization::RankT ranks(ser.getRanks().size());
+	for(unsigned int i=0;i<ranks.size();i++)
+		ranks[i] = prob.getOriginalIndex(ser.getRanks()[i]);
 
 	fs::path dir(gCfg().getString("output-dir").c_str());
 	fs::path base_fn(gen.getGraphID() + ".dot");
@@ -45,9 +45,9 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm&
 	// print node labels
 	for(unsigned int i=0; i<n; i++)
 	{
-		mOS	<< "  n" << ser[i] << "[" // use ID in adj-matrix
-			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, cpy)<<"\""
-			<<gen.getGraphVizNodeAttribs(cpy[i])<<"];"<<endl;
+		mOS	<< "  n" << ser.getRanks()[i] << "[" // use ID in adj-matrix
+			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, ranks)<<"\""
+			<<gen.getGraphVizNodeAttribs(ranks[i])<<"];"<<endl;
 	}
 	AdjMat::AdjMatT& A = *prob.getAdjMat();
 	for(unsigned int i=0;i<n;i++)

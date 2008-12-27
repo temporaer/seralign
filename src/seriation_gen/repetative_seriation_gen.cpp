@@ -60,7 +60,7 @@ Serialization RepetativeSerGen::operator()(const ProbAdjPerm& pap)
 		ds.sort(mypap);
 		ser = (*seriation_gen)(mypap);
 		for(int i=0;i<n;i++)
-			positions(mypap.getOriginalIndex(ser(i)), rep) = i;
+			positions(mypap.getOriginalIndex(ser.getRanks()(i)), rep) = i;
 	}
 	ublas::vector<double> avgpos(n);
 	for(int i=0;i<n;i++){
@@ -71,13 +71,13 @@ Serialization RepetativeSerGen::operator()(const ProbAdjPerm& pap)
 	}
 	//matlab_matrix_out(cout, "positions", positions);
 
-	Serialization finalser(n);
+	Serialization::RankT ranks(n);
 	for(int i=0;i<n;i++)
-		finalser(i)=i;
+		ranks(i)=i;
 
-	sort(finalser.begin(), finalser.end(), VectorSorter(avgpos));
+	sort(ranks.begin(), ranks.end(), VectorSorter(avgpos));
 
-	return finalser;
+	return Serialization(ranks);
 }
 
 
