@@ -73,7 +73,7 @@ double Mutagenesis::Impl::kernelTypeSum(int i, int j){
 	m["h"]  = 0.1;
 	m["c"]  = 0.4;
 
-	d += m[mTypes[i]] + m[mTypes[j]];
+	d += fabs(m[mTypes[i]] - m[mTypes[j]]);
 
 	return d;
 }
@@ -89,7 +89,7 @@ double Mutagenesis::Impl::kernelNull(int i, int j){
 string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s){
 	stringstream str;
 	AdjMat::AdjMatT& A = *mA_ptr;
-	unsigned int idx = s[ser_idx];
+	unsigned int idx = s.getRanks()[ser_idx];
 	str << mTypes[idx];
 	if(mIncludeGraphNeighbours){
 		str << "[";
@@ -107,7 +107,7 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s)
 	return str.str();
 }
 string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s){
-	unsigned int idx = s[ser_idx];
+	unsigned int idx = s.getRanks()[ser_idx];
 	if(idx>=mTypes.size()){
 		L("idx = %d, size = %d\n",idx,mTypes.size()); 
 		throw runtime_error("Mutagenesis::getPrologDescription(): Index too large");
@@ -126,8 +126,8 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 		if(i==0)                continue;
 		int nidx = idx+i;              // nidx: position of neighbour in serialization
 		if(nidx<0)              continue;
-		if(nidx>=(int)s.size()) continue;
-		int idx = s[nidx];             // idx: original position of neighbour
+		if(nidx>=(int)s.getRanks().size()) continue;
+		int idx = s.getRanks()[nidx];             // idx: original position of neighbour
 		if(mTypes[idx]!="b"){
 			o << ";neighChemAtom("<<mTypes[idx]<<")";
 		}
