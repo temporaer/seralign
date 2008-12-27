@@ -37,8 +37,14 @@ AdjMatGenCfg::AdjMatGenCfg(){
 		("rand_pat_adjmat_gen.edge_inclusion_prob", value<float>()->default_value(0.5f), "Probability of an edge not part of pattern to be included")
 		("rand_pat_adjmat_gen.gen_pat", value<bool>()->default_value(true), "If false, randomly assign nodes the part_of_pattern-property")
 		;
+	options_description fullconn_amg("  FullConn AdjMatGen");
+	fullconn_amg.add_options()
+		("fullconn_adjmat_gen.size", value<int>()->default_value(15), "Size of Graph to generate")
+		("fullconn_adjmat_gen.dim",  value<int>()->default_value(2), "dimensions the Vertices should live in")
+		;
 	od.add(rand_amg);
 	od.add(randpat_amg);
+	od.add(fullconn_amg);
 	od.add(mutagenesis);
 	gCfg().addModuleOptions(od);
 }

@@ -1,26 +1,31 @@
 #include <sstream>
 #include <configuration.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector_proxy.hpp>
 #include <factory/factory.h>
 #include <matlab_io.hpp>
 #include "full_conn_adjmat_gen.hpp"
 #include "jumbled_adjmat_gen.hpp"
+#include <nana.h>
 
 using namespace std;
 using namespace boost;
+namespace ublas = boost::numeric::ublas;
 
 void FullConnAdjmatGen::configure()
 {
 	AdjMatGen::configure(); 
+	mSize = gCfg().getInt("fullconn_adjmat_gen.size");
+	mDim  = gCfg().getInt("fullconn_adjmat_gen.dim");
 }
 
 FullConnAdjmatGen::FullConnAdjmatGen()
-	:mSize(25),mRunningID(0)
+	:mSize(25),mDim(2),mRunningID(0),mAdj(mSize,mSize)
 {
 }
 bool FullConnAdjmatGen::hasNext()
 {
-	return mRunningID<10;
+	return true;
 }
 FullConnAdjmatGen::~FullConnAdjmatGen()
 {
@@ -38,40 +43,62 @@ std::string FullConnAdjmatGen::getGraphVizNodeAttribs(int idx)
 std::string FullConnAdjmatGen::getPlainDescription(int ser_idx, const Serialization& ser)
 {
 	stringstream str;
-	switch(ser[ser_idx]){
-		case 3: str << ser[ser_idx]; break;
-		case 5: str << ser[ser_idx]; break;
-		default:str << "_";
-	}
 	return str.str();
 }
+int FullConnAdjmatGen::getClassID()
+{
+	return (mRunningID - (mRunningID % 30))/30;
+}
+
 ProbAdjPerm FullConnAdjmatGen::operator()()
 {
-	ProbAdjPerm pap;
-	shared_ptr<AdjMat::AdjMatT> adj(new AdjMat::AdjMatT(mSize, mSize));
-	for(int i=0;i<mSize;i++)
-		for(int j=i;j<mSize;j++)
-		{
-			if(j==i){
-				(*adj)(j,i) = (*adj)(i,j) = 0;
-				continue;
+	if((mRunningID%30) == 0)
+	{
+		mVertexPos.clear();
+		for(int i=0;i<mSize;i++){
+			ublas::vector<double> v(mDim);
+			for(int d=0;d<mDim;d++){
+				v(d) = drand48();
 			}
-			if(0);
-			else if(i==3 || j==3)
-				(*adj)(j,i) = (*adj)(i,j) = drand48()*0.3; 
-			else if(i==5 || j==5)
-				(*adj)(j,i) = (*adj)(i,j) = drand48()*0.1; 
+			mVertexPos.push_back(v); 
+		}
+	}
+
+	vector<ublas::vector<double> > vp = mVertexPos;
+	for(int i=0;i<mSize;i++){
+		ublas::vector<double>& v = vp[i];
+		for(int d=0;d<mDim;d++){
+			const float f = 0.1;
+			v(d) += f*drand48()-0.5*f; // move vertices a bit
+		}
+	}
+	shared_ptr<AdjMat::AdjMatT> adj(new AdjMat::AdjMatT(mSize,mSize));
+	for(int i=0;i<mSize;i++)
+		for(int j=0;j<mSize;j++)
+		{
+			if((i+j)%2 != 0)
+				(*adj)(i,j) = ublas::norm_2(vp[i]-vp[j]);
 			else
-				(*adj)(j,i) = (*adj)(i,j) = drand48()*1;
+				(*adj)(i,j) = 0;
 		}
 
-
+	ProbAdjPerm pap;
 	pap.setAdjMat(adj);
 
-	JumbledAdjMatGen jumb(pap);
+	//JumbledAdjMatGen jumb(pap);
 
-	pap = jumb();
+	//pap = jumb();
 
+	for(int i=0;i<adj->size1();i++)
+		for(int j=0;j<adj->size2();j++)
+		{
+			if(fabs((*adj)(i,j)) > 10)
+				cout << "arrgh!"<<endl;
+			if(((*adj)(i,j)) != ((*adj)(i,j)))
+				cout << "arrgh!"<<endl;
+		}
+
+	mRunningID++;
 	return pap;
 }
 
