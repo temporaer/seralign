@@ -14,6 +14,7 @@
 #include <SerGenAdj.hpp>
 
 #include <DegreeSort.hpp>
+#include <GraphFromAdj.hpp>
 
 #include <matlab_io.hpp>
 
@@ -74,8 +75,7 @@ void Serialize::operator()()
 		prob.calculateLaplacian();
 
 		if(verbose){ L("Action::Serialize %03d: Serializing...\n", cnt);}
-		Serialization randwalk;
-		randwalk = (*seriation_gen)(prob);
+		Serialization randwalk = (*seriation_gen)(prob);
 
 		if(verbose){ L("Action::Serialize %03d: Postprocessing...\n", cnt);}
 		out_ptr->atSeriation(*adjmat_gen, randwalk, prob);
@@ -84,7 +84,7 @@ void Serialize::operator()()
 		if(cnt == max_num)
 			break;
 	}
-	pb.finish();
+	if(nonverbose) { pb.finish(); }
 	out_ptr->atEnd();
 }
 
