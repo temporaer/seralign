@@ -75,6 +75,10 @@ IF(CSDP_FOUND)
 	ADD_TEST(t_csdp_wrapper ./t_csdp_wrapper --catch_system_errors=no )                                                                
 ENDIF(CSDP_FOUND)
 
+ADD_EXECUTABLE(t_icp t_icp.cpp)
+TARGET_LINK_LIBRARIES ( t_icp ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrtools )
+ADD_TEST(t_icp ./t_icp --catch_system_errors=no )
+
 ADD_EXECUTABLE(t_fastmap t_fastmap.cpp)
 TARGET_LINK_LIBRARIES ( t_fastmap ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} maartutils )
 ADD_TEST(t_fastmap ./t_fastmap --catch_system_errors=no )
@@ -98,6 +102,10 @@ ADD_TEST(t_jumbled_adjmat_gen ./t_jumbled_adjmat_gen)
 ADD_EXECUTABLE(t_degreesort t_degreesort.cpp)                                                                                       
 TARGET_LINK_LIBRARIES ( t_degreesort ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
 ADD_TEST(t_degreesort ./t_degreesort) 
+
+ADD_EXECUTABLE(t_graphfromadj t_graphfromadj.cpp)                                                                                       
+TARGET_LINK_LIBRARIES ( t_graphfromadj ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
+ADD_TEST(t_graphfromadj ./t_graphfromadj) 
 
 ADD_EXECUTABLE(t_origidx t_origidx.cpp)                                                                                       
 TARGET_LINK_LIBRARIES ( t_origidx ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${LAPACK_LIBRARIES} hrconfig graph_gen prob_dt )                  
