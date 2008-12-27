@@ -30,7 +30,7 @@ boost::numeric::ublas::matrix<TYPE_FLOAT>    quaternion_to_R3_rotation(::boost::
         throw(bad_argument);
     }
     
-    boost::numeric::ublas::matrix<TYPE_FLOAT>    out_matrix;
+    boost::numeric::ublas::matrix<TYPE_FLOAT>    out_matrix(3,3);
     
     out_matrix(0,0) = (aa+bb-cc-dd)/norme_carre;
     out_matrix(0,1) = 2*(-ad+bc)/norme_carre;
