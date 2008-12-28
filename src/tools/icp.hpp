@@ -12,9 +12,8 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/math/quaternion.hpp>
 #include <boost/numeric/bindings/lapack/lapack.hpp>
-//#include <quat_helper.hpp>
 
-#define V(X) #X << "=" << (X) <<" "
+//#define V(X) #X << "=" << (X) <<" "
 
 /**
  * @brief ICP The iterative Closest Point Algorithm
@@ -77,7 +76,7 @@ class ICP
 
 		/// Construct an ICP object
 		ICP(float lambda=2.f, int overlapiter=10, float trim_alpha=0.4, float trim_beta=1.0) 
-			: mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta)
+			: mVerbose(true), mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta)
 		{ }
 
 		/// Register a model. 
@@ -109,11 +108,12 @@ class ICP
 		inline TQuat getRot(){return mDeterminedRotation;}
 
 	public:
-		TTree     mModelTree;              ///< the registered model in a kD-Tree
-		TVec      mModelCentroid;          ///< the model centroid
+		const bool mVerbose;
+		TTree      mModelTree;             ///< the registered model in a kD-Tree
+		TVec       mModelCentroid;         ///< the model centroid
                                            
-		TQuat     mDeterminedRotation;     ///< the determined rotation
-		TVec      mDeterminedTranslation;  ///< the determined translation
+		TQuat      mDeterminedRotation;    ///< the determined rotation
+		TVec       mDeterminedTranslation; ///< the determined translation
 
 		const float  mLambda;              ///< parameter of phi-function in Chetverikov (Robust Euclidean alignment...)
 		const int    mOverlapIterations;   ///< how many iterations of golden section search for optimal overlap
@@ -204,7 +204,6 @@ ICP_FQCLASS::getCentroid(Iter begin, Iter end){
 	for(cnt=0; it!=end; cnt++, it++)
 		v += (TVec)(*it);
 	v /= (TPrecision) cnt;
-	//cout << "centroid: "<<v<<V(cnt)<<endl;
 	return boost::make_tuple(v,cnt);
 }
 
@@ -310,16 +309,16 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		sort(matchlist.begin(), matchlist.end(),TupleNComp<0,TMatch>());
 
 		// step 3: stop if conditions apply
-		if(nIter==0)               { cout << "break: nIter 0"<<endl;                           break; }
+		if(nIter==0)               { if(mVerbose) cout << "ICP break: nIter 0"<<endl;                           break; }
 
 		// trimming: determine which overlap parameters to use
 		int Npo; TPrecision e;
 		boost::tie(e,Npo) = getTrimmingParams(matchlist.begin(),p, TupleNAcc<0,TMatch>()); 
-		cout << V(Npo) << V(e)<<endl;
+		if(mVerbose) cout << "ICP Trimmed error ("<<Npo<<"/"<<p <<" is "<< e<<endl;
 		mend = matchlist.begin() + Npo;
 
-		if(fabs(e) < 0.0001)       { cout << "break: error small: "   <<e<<endl;               break; }
-		if(fabs(e-old_err)<0.0001) { cout << "break: err diff small: "<<fabs(e-old_err)<<endl; break; }
+		if(fabs(e) < 0.0001)       { if(mVerbose) cout << "ICP break: error small: "   <<e<<endl;               break; }
+		if(fabs(e-old_err)<0.0001) { if(mVerbose) cout << "ICP break: err diff small: "<<fabs(e-old_err)<<endl; break; }
 		old_err = e;
 
 		// step 4: compute optimal motion (Horn, 1987)

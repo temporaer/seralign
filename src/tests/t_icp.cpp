@@ -11,6 +11,7 @@ using namespace util;
 using namespace boost::numeric;
 using namespace std;
 
+#define V(X) #X << "=" << (X) <<" "
 struct Fixture{
 	
 	Fixture(){
