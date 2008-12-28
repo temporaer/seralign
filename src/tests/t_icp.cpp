@@ -6,6 +6,7 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <icp.hpp>
+#include <quat_helper.hpp>
 using namespace util;
 using namespace boost::numeric;
 using namespace std;
@@ -30,32 +31,75 @@ struct F{
 
 BOOST_FIXTURE_TEST_SUITE( suite, Fixture )
 
-BOOST_AUTO_TEST_CASE( test1 )
+BOOST_AUTO_TEST_CASE( testTrans )
 {
 	ICP<DIM,Point,F> icp;
 	vector<Point> v, w;
-	for(int i=0;i<10;i++){
+	const int S=9;
+	for(int i=0;i<S;i++){
 		Point p(DIM), q(DIM);
-		p[0] = i; p[1] = i*i; p[2] = i*i*i*i;
+		p[0] = i; p[1] = i*i; p[2] = 3*i;
 		v.push_back(p);
-		q[0] = i; q[1] = i*i; q[2] = i*i*i*i;
 		w.push_back(p);
 	}
-	for(int i=0;i<10; i++){
-		//v[i] += ublas::scalar_vector<double>(3,100+0.3*i+0.01*i*i);
-		swap(v[i][1],v[i][2]);
-		//v[i][2] += 50*drand48();
+	for(int i=0;i<S; i++){
+		v[i] += ublas::scalar_vector<double>(3,0.1);
+		//swap(v[i][1],v[i][2]);
+		v[i][0] += 0.01*drand48();
+		v[i][1] += 0.01*drand48();
+		v[i][2] += 0.01*drand48();
 	}
 	icp.registerModel(v.begin(), v.end());
 	icp.match(w.begin(),w.end());
-	cout << "trans: " <<icp.getTrans() <<endl;
-	//cout << "rot:   " << quaternion_to_R3_rotation(icp.getRot()) <<endl;
-	cout << "rot:   " << icp.getRot() <<endl;
 	ICP<DIM,Point,F>::TQuat q = icp.getRot();
-	BOOST_CHECK_CLOSE(q.R_component_1(),0.13f,1.0);
-	BOOST_CHECK_CLOSE(q.R_component_2(),0.13f,1.0);
-	BOOST_CHECK_CLOSE(q.R_component_3(),-0.69f,1.0);
-	BOOST_CHECK_CLOSE(q.R_component_4(),-0.69f,1.0);
+	BOOST_CHECK_CLOSE(q.R_component_1(),1.0f,1.0);
+	BOOST_CHECK_CLOSE(q.R_component_2(),0.0f,1.0);
+	BOOST_CHECK_CLOSE(q.R_component_3(),0.0f,1.0);
+	BOOST_CHECK_CLOSE(q.R_component_4(),0.0f,1.0);
+}
+BOOST_AUTO_TEST_CASE( testRot )
+{
+	ICP<DIM,Point,F> icp;
+	vector<Point> model, query_orig, query;
+	const int S=10;
+	for(int i=0;i<S;i++){
+		Point p(DIM), q(DIM);
+		p[0] = i; p[1] = 2*i; p[2] = 3*i;
+		model.push_back(p);
+	}
+	copy(model.begin(),model.end(),back_inserter(query_orig));
+	copy(model.begin(),model.end(),back_inserter(query));
+
+	// modify model a bit
+	for(int i=0;i<S; i++) {
+		model[i] += ublas::scalar_vector<double>(3,0.1);
+		swap(model[i][1],model[i][2]);
+	}
+
+	// register model and match query
+	icp.registerModel(model.begin(), model.end());
+	icp.match(query.begin(),query.end());
+
+	cout << "trans: " <<icp.getTrans() <<endl;
+	cout << "rotmat:" << quaternion_to_R3_rotation(icp.getRot()) <<endl;
+	cout << "rot:   " << icp.getRot() <<endl;
+
+	// test transformation properties
+	ICP<DIM,Point,F>::TQuat q = icp.getRot();
+	ICP<DIM,Point,F>::TVec  v = icp.getTrans();
+	cout << V(v)<<endl;
+	for(int i=0; i<S; i++){
+		Point x = query_orig[i];
+		Point y = model[i];
+		ICP<DIM,Point,F>::TQuat qx(0,x[0],x[1],x[2]);
+		ICP<DIM,Point,F>::TQuat qy(0,y[0],y[1],y[2]);
+		ICP<DIM,Point,F>::TQuat qv(0,v[0],v[1],v[2]);
+		ICP<DIM,Point,F>::TQuat qxtrans = q * qx * boost::math::conj(q) + qv;
+		BOOST_CHECK_CLOSE(qxtrans.R_component_2(),qy.R_component_2(),1.0);
+		BOOST_CHECK_CLOSE(qxtrans.R_component_3(),qy.R_component_3(),1.0);
+		BOOST_CHECK_CLOSE(qxtrans.R_component_4(),qy.R_component_4(),1.0);
+	}
+
 }
 
 

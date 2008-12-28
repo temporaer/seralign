@@ -12,7 +12,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/math/quaternion.hpp>
 #include <boost/numeric/bindings/lapack/lapack.hpp>
-#include <quad_helper.hpp>
+//#include <quat_helper.hpp>
 
 #define V(X) #X << "=" << (X) <<" "
 
@@ -43,9 +43,26 @@ class ICP
 		struct VectorTranslator
 		{ inline TPoint operator()(const TPoint& orig, const TVec& t){return orig+t;} };
 
-		/// Rotates a TPoint by multiplying it with a rotation matrix R
+		/// Rotates a TPoint by multiplying it with a quaternion q
 		struct VectorRotator
-		{ inline TPoint operator()(const TPoint& orig, const TMat& R){return prod(R, orig);} };
+		{ //inline TPoint operator()(const TPoint& orig, const TMat& R){return prod(R, orig);} 
+		  inline TPoint operator()(const TPoint& orig, const TQuat& q){
+			  TQuat a=q * TQuat(0,orig[0],orig[1],orig[2]) * boost::math::conj(q);
+			  TPoint res(3);
+			  res[0] = a.R_component_2();
+			  res[1] = a.R_component_3();
+			  res[2] = a.R_component_4();
+			  return res;
+		  } 
+		};
+		inline TVec rotateVector(const TVec& orig, const TQuat& q){
+			TQuat a=q * TQuat(0,orig[0],orig[1],orig[2]) * boost::math::conj(q);
+			TVec res(3);
+			res[0] = a.R_component_2();
+			res[1] = a.R_component_3();
+			res[2] = a.R_component_4();
+			return res;
+		} 
 
 		/// compare two tuples w.r.t. i-th component
 		template<int i,class Tuple> struct TupleNComp
@@ -59,8 +76,8 @@ class ICP
 			{ return d + b.template get<i>(); } };
 
 		/// Construct an ICP object
-		ICP(float lambda=2.f, int overlapiter=10) 
-			: mLambda(lambda), mOverlapIterations(overlapiter)
+		ICP(float lambda=2.f, int overlapiter=10, float trim_alpha=0.4, float trim_beta=1.0) 
+			: mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta)
 		{ }
 
 		/// Register a model. 
@@ -100,6 +117,8 @@ class ICP
 
 		const float  mLambda;              ///< parameter of phi-function in Chetverikov (Robust Euclidean alignment...)
 		const int    mOverlapIterations;   ///< how many iterations of golden section search for optimal overlap
+		const float  mTrimAlpha;           ///< trimming parameter: lower bound of interval to search for minimum of phi(xi)
+		const float  mTrimBeta;            ///< trimming parameter: upper bound of interval to search for minimum of phi(xi)
 
 		/// determine the centroid of the points between begin and end. 
 		/// Assumes that they are convertible to TVec.
@@ -114,11 +133,53 @@ class ICP
 		/// determine the quaternion for the matches between begin and end.
 		template<class Iter>
 		inline TQuat getQuat(Iter begin, Iter end);
+
+		/// determine number of points to use and resulting error
+		/// @param begin start of match-vector
+		/// @param     p total number of points in match-vector
+		/// @param   acc an accumulator to count errors in overlap section
+		template<class Iter, class Acc>
+		boost::tuple<TPrecision,int>
+		getTrimmingParams(Iter begin, int p, Acc acc);
 };
 
 /*-----------------------------------------------------------------------------
  *  Implementation of class ICP
  *-----------------------------------------------------------------------------*/
+ICP_TMPL
+template<class Iter, class Accu>
+boost::tuple<typename ICP_FQCLASS::TPrecision,int>
+ICP_FQCLASS::getTrimmingParams(Iter begin, int p, Accu acc){
+	TPrecision alpha = mTrimAlpha, beta=mTrimBeta, e;
+	const TPrecision goldenSection = 0.38197;
+	int n;
+
+	for(int iter=0;iter<mOverlapIterations;iter++){
+		TPrecision x1    = alpha + goldenSection * (beta - alpha);
+		n = alpha * p + 0.5f;
+		TPrecision e_alpha   = e =std::accumulate(begin,begin+n,0.0,acc)/n;
+		TPrecision phi_alpha = e_alpha/pow(alpha,1+mLambda);
+		n = x1    * p + 0.5f;
+		TPrecision e_x1      = e =std::accumulate(begin,begin+n,0.0,acc)/n;
+		TPrecision phi_x1    = e_x1/pow(x1,1+mLambda);
+		if(phi_alpha < phi_x1) {
+			beta = x1;
+			continue;
+		}
+		TPrecision x2    = beta  - goldenSection * (beta - alpha);
+		n = x2    * p + 0.5f;
+		TPrecision e_x2      = e =std::accumulate(begin,begin+n,0.0,acc)/n;
+		TPrecision phi_x2    = e_x2/pow(x2,1+mLambda);
+		if(phi_x1 < phi_x2) {
+			alpha = x1; 
+			beta = x2;
+			continue;
+		}
+		alpha = x2;
+	}
+	return boost::tie(e,n);
+}
+
 ICP_TMPL
 template<class Iter, class OIt>
 void 
@@ -143,6 +204,7 @@ ICP_FQCLASS::getCentroid(Iter begin, Iter end){
 	for(cnt=0; it!=end; cnt++, it++)
 		v += (TVec)(*it);
 	v /= (TPrecision) cnt;
+	//cout << "centroid: "<<v<<V(cnt)<<endl;
 	return boost::make_tuple(v,cnt);
 }
 
@@ -176,11 +238,11 @@ ICP_TMPL
 template<class Iter>
 typename ICP_FQCLASS::TQuat
 ICP_FQCLASS::getQuat(Iter begin, Iter end){
+	// as in Horn (1987)
 	TMat M(boost::numeric::ublas::zero_matrix<TPrecision>(PtDim, PtDim));
 	for(Iter mit = begin; mit!=end; mit++){
 		M += boost::numeric::ublas::outer_prod((TVec)(*mit->template get<1>()), (TVec)(*mit->template get<2>()));
 	}
-	// as in Horn 1987
 	TPrecision Sxx = M(0,0), Syy = M(1,1), Szz = M(2,2),
 			   Syx = M(1,0), Szx = M(2,0), Szy = M(2,1),
 			   Sxy = M(0,1), Sxz = M(0,2), Syz = M(1,2);
@@ -224,7 +286,6 @@ template<class Iter, class Translator, class Rotator>
 void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rotate){
 	int nIter = 10000;
 	mDeterminedRotation    = TQuat(1,0,0,0);
-	mDeterminedTranslation = TVec(PtDim);
 	typedef boost::tuple<TPrecision, Iter,typename TTree::iterator>  TMatch; 
 	typedef std::vector<TMatch>                                      TMatchList;
 	TMatchList matchlist;
@@ -232,14 +293,14 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 	// determine centroid of query
 	TVec queryCentroid; int p;
 	boost::tie(queryCentroid, p) = getCentroid(begin,end);
-	mDeterminedTranslation = -queryCentroid;
-	std::transform(begin,end,begin,boost::bind<TPoint>(translate,::_1,mDeterminedTranslation));
+	mDeterminedTranslation = TVec(PtDim,0);
+	std::transform(begin,end,begin,boost::bind<TPoint>(translate,::_1,-queryCentroid));
 
 	matchlist.resize(p); 
-	typename TMatchList::iterator oit = matchlist.begin(), mit;
+	typename TMatchList::iterator oit = matchlist.begin(), mit, mend;
 	TPrecision old_err = INT_MAX;
-	TMat R(boost::numeric::ublas::identity_matrix<TPrecision>(PtDim,PtDim));
-	TVec t(boost::numeric::ublas::scalar_vector<TPrecision>(PtDim, 0));
+	TMat R(PtDim,PtDim);
+	TVec t(PtDim);
 
 	while(true){
 		// step 1: find best match
@@ -251,35 +312,11 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		// step 3: stop if conditions apply
 		if(nIter==0)               { cout << "break: nIter 0"<<endl;                           break; }
 
-		float alpha = 0.4, beta = 1.0;
-
-		int Npo;
-		float e;
-		TupleNAcc<0,TMatch> acc;
-		for(int iter=0;iter<10;iter++){
-			float x1    = alpha + 0.38197 * (beta - alpha);
-			Npo = alpha * p + 0.5f;
-			TPrecision e_alpha   = e =std::accumulate(matchlist.begin(),matchlist.end()+Npo,0.0,acc)/Npo;
-			TPrecision phi_alpha = e_alpha/pow(alpha,1+mLambda);
-			Npo = x1    * p + 0.5f;
-			TPrecision e_x1    = e =std::accumulate(matchlist.begin(),matchlist.end()+Npo,0.0,acc)/Npo;
-			TPrecision phi_x1  = e_x1/pow(x1,1+mLambda);
-			if(phi_alpha < phi_x1) {
-				beta = x1;
-				continue;
-			}
-			float x2    = beta  - 0.38197 * (beta - alpha);
-			Npo = x2    * p + 0.5f;
-			TPrecision e_x2    = e =std::accumulate(matchlist.begin(),matchlist.end()+Npo,0.0,acc)/Npo;
-			TPrecision phi_x2  = e_x2/pow(x2,1+mLambda);
-			if(phi_x1 < phi_x2) {
-				alpha = x1; 
-				beta = x2;
-				continue;
-			}
-			alpha = x2;
-		}
-		cout << V(Npo) <<endl;
+		// trimming: determine which overlap parameters to use
+		int Npo; TPrecision e;
+		boost::tie(e,Npo) = getTrimmingParams(matchlist.begin(),p, TupleNAcc<0,TMatch>()); 
+		cout << V(Npo) << V(e)<<endl;
+		mend = matchlist.begin() + Npo;
 
 		if(fabs(e) < 0.0001)       { cout << "break: error small: "   <<e<<endl;               break; }
 		if(fabs(e-old_err)<0.0001) { cout << "break: err diff small: "<<fabs(e-old_err)<<endl; break; }
@@ -287,26 +324,28 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 
 		// step 4: compute optimal motion (Horn, 1987)
 		// - convention: left: Query;  right: Model
-		// - 4a: Determine Rotation Matrix
-		TQuat q(getQuat(matchlist.begin(), matchlist.end()));
-		mDeterminedRotation = mDeterminedRotation * q;
-		R = quaternion_to_R3_rotation<TPrecision>(q);
+		// - 4a: Determine Rotation Matrix from Npo matches
+		TQuat q(getQuat(matchlist.begin(), mend));
+		mDeterminedRotation = q * mDeterminedRotation ;
 
 		// TODO: Determine Scale factor (necessary ???)
-		// - 4b: Determine Translation.
+		// - 4b: Determine Translation from Npo matches.
 		t = boost::numeric::ublas::scalar_vector<TPrecision>(PtDim,0);
-		for(mit = matchlist.begin(); mit!=matchlist.end(); mit++) {
-			t += (TVec)(*mit->template get<2>()) - (TVec)(rotate(*mit->template get<1>(), R));
+		for(mit = matchlist.begin(); mit!=mend; mit++) {
+			t += (TVec)(*mit->template get<2>()) - (TVec)(rotate(*mit->template get<1>(), q));
 		}
 		t/=(TPrecision)matchlist.size();
 		mDeterminedTranslation += t;
 
-		// step 5: Transform all points according to R, t
-		std::transform(begin, end, begin, boost::bind<TPoint>(rotate, ::_1, R));
+		// step 5: Transform _all_ points according to R, t
+		std::transform(begin, end, begin, boost::bind<TPoint>(rotate, ::_1, q));
 		std::transform(begin, end, begin, boost::bind<TPoint>(translate, ::_1, t));
 		nIter--;
 	}
+	mDeterminedTranslation += -rotateVector(queryCentroid,mDeterminedRotation) +mModelCentroid;
 }
+#undef ICP_TMPL    
+#undef ICP_FQCLASS 
 
 }  // namespace util
 
