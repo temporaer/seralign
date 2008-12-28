@@ -27,18 +27,6 @@ namespace util{
 #define ICP_TMPL    template<int PtDim, class T, class AccessorT>
 #define ICP_FQCLASS ICP<PtDim,T,AccessorT>
 
-template<int i,class T> 
-struct TupleNComp
-{ inline bool operator()(const T& a, const T& b){
-		return a.template get<i>() < b.template get<i>();
-	}
-};
-template<int i,class T> 
-struct TupleN
-{ inline double operator()(double d, const T& b){
-		return d + b.template get<i>();
-	}
-};
 
 ICP_TMPL
 class ICP
@@ -51,43 +39,86 @@ class ICP
 		typedef boost::numeric::ublas::matrix<TPrecision, boost::numeric::ublas::column_major>           TMat; 
 		typedef boost::math::quaternion<TPrecision>                 TQuat; 
 	public:
+		/// Moves a TPoint by adding a TVec to it
 		struct VectorTranslator
 		{ inline TPoint operator()(const TPoint& orig, const TVec& t){return orig+t;} };
+
+		/// Rotates a TPoint by multiplying it with a rotation matrix R
 		struct VectorRotator
 		{ inline TPoint operator()(const TPoint& orig, const TMat& R){return prod(R, orig);} };
 
-		ICP(){ }
+		/// compare two tuples w.r.t. i-th component
+		template<int i,class Tuple> struct TupleNComp
+		{ inline bool operator()(const Tuple& a, const Tuple& b)
+			{ return a.template get<i>() < b.template get<i>(); }
+		};
 
+		/// accumulate i-th component of a tuple
+		template<int i,class Tuple> struct TupleNAcc
+		{ inline double operator()(double d, const Tuple& b)
+			{ return d + b.template get<i>(); } };
+
+		/// Construct an ICP object
+		ICP(float lambda=2.f, int overlapiter=10) 
+			: mLambda(lambda), mOverlapIterations(overlapiter)
+		{ }
+
+		/// Register a model. 
+		/// Assumes that the TPoints can be moved by adding a TVec to them.
 		template<class Iter>
 		void registerModel(Iter begin, Iter end);
+
+		/// Register a model. 
+		/// Assumes that the TPoints can be moved using the supplied Translator t.
 		template<class Iter, class Translator>
 		void registerModel(Iter begin, Iter end, Translator t);
 
+		/// Match something to the model.
+		/// Assumes that the TPoints can be moved by adding a TVec to them.
+		/// Assumes that the TPoints can be rotated by multiplication with a rotation matrix.
 		template<class Iter>
 		void match(Iter begin, Iter end);
+
+		/// Match something to the model.
+		/// Assumes that the TPoints can be moved using supplied Translator.
+		/// Assumes that the TPoints can be rotated using supplied Rotator.
 		template<class Iter, class Translator, class Rotator>
 		void match(Iter begin, Iter end, Translator t, Rotator r);
 
+		/// Returns the determined translation.
 		inline TVec  getTrans(){return mDeterminedTranslation;}
+
+		/// Returns the determined rotation as a quaternion.
 		inline TQuat getRot(){return mDeterminedRotation;}
 
 	public:
-		TTree     mModelTree;
-		TVec      mModelCentroid;
+		TTree     mModelTree;              ///< the registered model in a kD-Tree
+		TVec      mModelCentroid;          ///< the model centroid
+                                           
+		TQuat     mDeterminedRotation;     ///< the determined rotation
+		TVec      mDeterminedTranslation;  ///< the determined translation
 
-		TQuat     mDeterminedRotation;
-		TVec      mDeterminedTranslation;
+		const float  mLambda;              ///< parameter of phi-function in Chetverikov (Robust Euclidean alignment...)
+		const int    mOverlapIterations;   ///< how many iterations of golden section search for optimal overlap
 
+		/// determine the centroid of the points between begin and end. 
+		/// Assumes that they are convertible to TVec.
 		template<class Iter>
 		inline boost::tuple<TVec,int>   getCentroid(Iter begin, Iter end);
 
+		/// determine the best match of the points in begin, end to model.
+		/// The result is saved in the output-iterator out.
 		template<class Iter, class OIt>
 		inline void determineBestMatches(Iter begin, Iter end, OIt out);
 
+		/// determine the quaternion for the matches between begin and end.
 		template<class Iter>
 		inline TQuat getQuat(Iter begin, Iter end);
 };
 
+/*-----------------------------------------------------------------------------
+ *  Implementation of class ICP
+ *-----------------------------------------------------------------------------*/
 ICP_TMPL
 template<class Iter, class OIt>
 void 
@@ -138,6 +169,7 @@ void ICP_FQCLASS::registerModel(Iter begin, Iter end, Translator translate){
 	mModelTree = TTree(); 
 	for(Iter it = begin; it!=end; it++)
 		mModelTree.insert( translate(*it,-mModelCentroid) );
+	mModelTree.optimize(); 
 }
 
 ICP_TMPL
@@ -222,17 +254,16 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		float alpha = 0.4, beta = 1.0;
 
 		int Npo;
-		const float lambda = 2;
 		float e;
-		TupleN<0,TMatch> acc;
+		TupleNAcc<0,TMatch> acc;
 		for(int iter=0;iter<10;iter++){
 			float x1    = alpha + 0.38197 * (beta - alpha);
 			Npo = alpha * p + 0.5f;
 			TPrecision e_alpha   = e =std::accumulate(matchlist.begin(),matchlist.end()+Npo,0.0,acc)/Npo;
-			TPrecision phi_alpha = e_alpha/pow(alpha,1+lambda);
+			TPrecision phi_alpha = e_alpha/pow(alpha,1+mLambda);
 			Npo = x1    * p + 0.5f;
 			TPrecision e_x1    = e =std::accumulate(matchlist.begin(),matchlist.end()+Npo,0.0,acc)/Npo;
-			TPrecision phi_x1  = e_x1/pow(x1,1+lambda);
+			TPrecision phi_x1  = e_x1/pow(x1,1+mLambda);
 			if(phi_alpha < phi_x1) {
 				beta = x1;
 				continue;
@@ -240,7 +271,7 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 			float x2    = beta  - 0.38197 * (beta - alpha);
 			Npo = x2    * p + 0.5f;
 			TPrecision e_x2    = e =std::accumulate(matchlist.begin(),matchlist.end()+Npo,0.0,acc)/Npo;
-			TPrecision phi_x2  = e_x2/pow(x2,1+lambda);
+			TPrecision phi_x2  = e_x2/pow(x2,1+mLambda);
 			if(phi_x1 < phi_x2) {
 				alpha = x1; 
 				beta = x2;
