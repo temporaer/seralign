@@ -1,6 +1,7 @@
 // 2008-12-19 Hannes Schulz <mail at hannes-schulz dot de>
 
 #include "GraphFromAdj.hpp"
+#include <limits.h>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/graph/adjacency_matrix.hpp>
@@ -29,10 +30,16 @@ struct GraphFromAdj::Impl{
 	Impl(const ProbAdjPerm&, unsigned int idx1, unsigned int idx2);
 	~Impl();
 	double  getDist(int i);
+	double  getDistFromIdx1(int i);
+	double  getDistFromIdx2(int i);
+	void    setIdx1(int i);
+	void    setIdx2(int i);
+	unsigned int     getFarthestFromIdx1();
+	unsigned int     getFarthestFromIdx2();
 	Graph               mG;
 	WeightMap           mWeightMap;
 	double              mTotalDistance;
-	std::vector<pair<vertex_descriptor,vertex_descriptor> > mPivots; 
+	pair<vertex_descriptor,vertex_descriptor> mPivot; 
 	std::vector<double> mDistanceMapA;
 	std::vector<double> mDistanceMapB;
 };
@@ -40,8 +47,8 @@ struct GraphFromAdj::Impl{
 double
 GraphFromAdj::Impl::getDist(int idx){
 	vertex_descriptor v = bgl::vertex(idx, mG);
-	if(v == mPivots[0].first)  return 0.0;
-	if(v == mPivots[0].second) return mTotalDistance;
+	if(v == mPivot.first)  return 0.0;
+	if(v == mPivot.second) return mTotalDistance;
 	
 	double a = mDistanceMapA[v];
 	double b = mDistanceMapB[v];
@@ -60,6 +67,53 @@ GraphFromAdj::Impl::getDist(int idx){
 	double x = (tmp>1)?0:(a * sqrt(1-tmp*tmp));
 	return x;
 }
+
+unsigned int
+GraphFromAdj::Impl::getFarthestFromIdx1(){
+	double maxDist = -1E9;
+	unsigned int    maxIdx  = -1;
+	for(unsigned int i=0;i<mDistanceMapA.size();i++) {
+		vertex_descriptor v = bgl::vertex(i, mG);
+		if(mDistanceMapA[v]>maxDist){
+			maxDist = mDistanceMapA[v];
+			maxIdx  = i;
+		}
+	}
+	return maxIdx;
+}
+unsigned int
+GraphFromAdj::Impl::getFarthestFromIdx2(){
+	double maxDist = -1E9;
+	unsigned int    maxIdx  = -1;
+	for(unsigned int i=0;i<mDistanceMapB.size();i++) {
+		vertex_descriptor v = bgl::vertex(i, mG);
+		if(mDistanceMapA[v]>maxDist){
+			maxDist = mDistanceMapB[v];
+			maxIdx  = i;
+		}
+	}
+	return maxIdx;
+}
+double
+GraphFromAdj::Impl::getDistFromIdx1(int i){ return mDistanceMapA[i]; }
+double
+GraphFromAdj::Impl::getDistFromIdx2(int i){ return mDistanceMapB[i]; }
+void
+GraphFromAdj::Impl::setIdx1(int i){ 
+	vertex_descriptor s = vertex(i, mG);
+	mPivot.first = s;
+	bgl::dijkstra_shortest_paths(mG, s, bgl::distance_map(&mDistanceMapA[0]));
+	mTotalDistance = mDistanceMapA[mPivot.second];
+}
+void
+GraphFromAdj::Impl::setIdx2(int i){
+	vertex_descriptor t = vertex(i, mG);
+	mPivot.second = t;
+	bgl::dijkstra_shortest_paths(mG, t, bgl::distance_map(&mDistanceMapB[0]));
+	mTotalDistance = mDistanceMapB[mPivot.first];
+}
+
+
 // Impl constructor
 GraphFromAdj::Impl::Impl(const ProbAdjPerm& pap, unsigned int idx1, unsigned int idx2)
 	:
@@ -77,18 +131,8 @@ GraphFromAdj::Impl::Impl(const ProbAdjPerm& pap, unsigned int idx1, unsigned int
 			if(A(i,j)<0.0000001) mWeightMap[e] = INT_MAX;
 			else                 mWeightMap[e] = A(i,j);
 		}
-	vertex_descriptor s = vertex(idx1, mG);
-	bgl::dijkstra_shortest_paths(mG, s, bgl::distance_map(&mDistanceMapA[0]));
-	vertex_descriptor t = vertex(idx2, mG);
-	bgl::dijkstra_shortest_paths(mG, t, bgl::distance_map(&mDistanceMapB[0]));
-	I(mDistanceMapB.size() == mDistanceMapA.size());
-	mPivots.push_back(make_pair(s,t)); 
-	mTotalDistance = mDistanceMapA[t];
-#ifndef NDEBUG
-	if(fabs(mTotalDistance - mDistanceMapB[s]) > 0.000001){
-		cerr << "Warning: Graph Distance Metric assymetric!"<< endl;
-	}
-#endif
+	setIdx1(idx1);
+	setIdx2(idx2);
 }
 
 // Impl destructor
@@ -112,4 +156,20 @@ double GraphFromAdj::getDist(int i)
 {
 	return mImpl->getDist(i);
 }
+double GraphFromAdj::getTotalDist(){
+	return mImpl->mTotalDistance;
+}
+double GraphFromAdj::getDistFromIdx1(int i)
+{ return mImpl->getDistFromIdx1(i); }
+double GraphFromAdj::getDistFromIdx2(int i)
+{ return mImpl->getDistFromIdx2(i); }
+void   GraphFromAdj::setIdx1(int i)
+{ mImpl->setIdx1(i);}
+void   GraphFromAdj::setIdx2(int i)
+{ mImpl->setIdx2(i);}
+unsigned int    GraphFromAdj::getFarthestFromIdx1()
+{ return mImpl->getFarthestFromIdx1(); }
+unsigned int    GraphFromAdj::getFarthestFromIdx2()
+{ return mImpl->getFarthestFromIdx2(); }
+
 

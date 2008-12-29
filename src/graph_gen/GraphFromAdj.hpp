@@ -14,6 +14,13 @@ class GraphFromAdj
     virtual ~GraphFromAdj();
 
 	double getDist(int i);
+	double getTotalDist();
+	double getDistFromIdx1(int i);
+	double getDistFromIdx2(int i);
+	void   setIdx1(int i);
+	void   setIdx2(int i);
+	unsigned int    getFarthestFromIdx1();
+	unsigned int    getFarthestFromIdx2();
 
   private:
 
