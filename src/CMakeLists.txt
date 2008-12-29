@@ -105,6 +105,7 @@ ADD_SUBDIRECTORY( sdp_wrappers )
 ADD_SUBDIRECTORY( graph_gen )
 ADD_SUBDIRECTORY( seriation_gen )
 ADD_SUBDIRECTORY( postproc )
+ADD_SUBDIRECTORY( db )
 ADD_SUBDIRECTORY( third_party/maart/utility )
 ADD_SUBDIRECTORY( third_party/gnuplot-cpp )
 include_directories( 
@@ -151,6 +152,7 @@ target_link_libraries(hrmain
 	dl
 	hrconfig 
 	hrtools
+	hrdb
 	graph_gen
 	prob_dt
 	seriation_gen

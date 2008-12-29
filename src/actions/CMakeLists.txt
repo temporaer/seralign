@@ -13,6 +13,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/prob_dt
 	${CMAKE_SOURCE_DIR}/sdp_wrappers
 	${CMAKE_SOURCE_DIR}/tools
+	${CMAKE_SOURCE_DIR}/db
 	${CMAKE_SOURCE_DIR}/postproc
 	${CMAKE_SOURCE_DIR}/third_party/maart
 	${CMAKE_SOURCE_DIR}/third_party/gnuplot-cpp
@@ -21,6 +22,7 @@ include_directories(
 add_library( actions SHARED action_cfg.cpp 
               action.hpp    action.cpp 
 			  serialize.hpp serialize.cpp 
+			  build_db.hpp  build_db.cpp
 			  fastmap_distancemat.hpp fastmap_distancemat.cpp 
 			  )
 
