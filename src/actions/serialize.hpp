@@ -1,5 +1,5 @@
-#ifndef __SDP_SIMPLE_HPP__
-#define __SDP_SIMPLE_HPP__
+#ifndef __SERIALIZE_HPP__
+#define __SERIALIZE_HPP__
 
 #include "action.hpp"
 
@@ -8,4 +8,4 @@ class Serialize:public Action{
 	virtual ~Serialize();
 };
 
-#endif /* __SDP_SIMPLE_HPP__ */
+#endif /* __SERIALIZE_HPP__ */
