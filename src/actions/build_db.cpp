@@ -71,16 +71,22 @@ void BuildDB::operator()()
 	if(nonverbose) { pb.finish(); }
 	ProgressBar matching(cnt, "Matching");
 	ofstream os(gCfg().getOutputFile("output").c_str());
+
+	// output distances as CSV
+	for(vector<string>::const_iterator it=db.getIDs().begin(); it!=db.getIDs().end(); it++){
+		os <<","<<(*it);
+	}
+	os<<endl;
 	for(GDistProjectedDB::iterator it=db.begin(); it!=db.end(); it++){
 		if(nonverbose){matching.inc();}
 		vector<GDistProjectedDB::point_type> query;
 		copy(it->begin(),it->end(),back_inserter(query));
-		int idx = 0;
+		os << "dummy";
 		for(GDistProjectedDB::iterator it2=db.begin(); it2!=db.end(); it2++){
 			it2->match(query.begin(),query.end());
-			os << idx++ << "\t" <<it2->getMatchingError() << "\t" << it2->getMatchItersPerformed() <<endl;
+			os << "," <<it2->getMatchingError();
 		}
-		os << endl << endl;
+		os << endl;
 	}
 	if(nonverbose){matching.finish();}
 }

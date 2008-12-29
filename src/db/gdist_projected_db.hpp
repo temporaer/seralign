@@ -18,6 +18,7 @@ class GDistProjectedDB{
 		inline iterator end()  {return mDB.end();}
 		void add(const std::string& id, const ProbAdjPerm& pap);
 		void configure();
+		inline const std::vector<std::string>& getIDs(){return mIDs;}
 	private:
 		TICPVec           mDB;
 		std::string       mSeriationGenName;
