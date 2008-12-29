@@ -41,6 +41,8 @@ class ICP
 		/// Moves a TPoint by adding a TVec to it
 		struct VectorTranslator
 		{ inline TPoint operator()(const TPoint& orig, const TVec& t){return orig+t;} };
+		struct VectorScaler
+		{ inline TPoint operator()(const TPoint& orig, const TPrecision& s){return s*orig;} };
 
 		/// Rotates a TPoint by multiplying it with a quaternion q
 		struct VectorRotator
@@ -73,10 +75,19 @@ class ICP
 		template<int i,class Tuple> struct TupleNAcc
 		{ inline double operator()(double d, const Tuple& b)
 			{ return d + b.template get<i>(); } };
+		/// accumulate lengths of vectors in a tuple
+		template<int i,class Tuple> struct TupleNLength2Acc
+		{ inline double operator()(double d, const Tuple& b)
+			{ TVec v = (TVec)(*b.template get<i>());
+				return d + std::accumulate(v.begin(),v.end(),0.0,boost::lambda::_1 + boost::lambda::_2 * boost::lambda::_2); } };
+		/// accumulate lengths of vectors 
+		struct Length2Acc
+		{ inline double operator()(double d, const TVec& b)
+			{ return d + std::accumulate(b.begin(),b.end(),0.0,boost::lambda::_1 + boost::lambda::_2 * boost::lambda::_2); } };
 
 		/// Construct an ICP object
 		ICP(float lambda=2.f, int overlapiter=10, float trim_alpha=0.4, float trim_beta=1.0) 
-			: mVerbose(true), mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta)
+			: mVerbose(false), mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta)
 		{ }
 
 		/// Register a model. 
@@ -107,8 +118,11 @@ class ICP
 		/// Returns the determined rotation as a quaternion.
 		inline TQuat getRot(){return mDeterminedRotation;}
 
-	public:
-		const bool mVerbose;
+		/// set verbosity
+		inline void setVerbose(bool b){mVerbose=b;}
+
+	private:
+		bool       mVerbose;
 		TTree      mModelTree;             ///< the registered model in a kD-Tree
 		TVec       mModelCentroid;         ///< the model centroid
                                            
@@ -298,15 +312,17 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 	matchlist.resize(p); 
 	typename TMatchList::iterator oit = matchlist.begin(), mit, mend;
 	TPrecision old_err = INT_MAX;
-	TMat R(PtDim,PtDim);
-	TVec t(PtDim);
+	TMat       R(PtDim,PtDim);
+	TVec       t(PtDim);
+	TPrecision scale=1;
+	TupleNComp<0, TMatch> cmp0;
 
 	while(true){
 		// step 1: find best match
 		determineBestMatches(begin,end,matchlist.begin());
 
 		// step 2: sort according to dist. 
-		sort(matchlist.begin(), matchlist.end(),TupleNComp<0,TMatch>());
+		sort(matchlist.begin(), matchlist.end(),cmp0);
 
 		// step 3: stop if conditions apply
 		if(nIter==0)               { if(mVerbose) cout << "ICP break: nIter 0"<<endl;                           break; }
@@ -317,8 +333,8 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		if(mVerbose) cout << "ICP Trimmed error ("<<Npo<<"/"<<p <<" is "<< e<<endl;
 		mend = matchlist.begin() + Npo;
 
-		if(fabs(e) < 0.0001)       { if(mVerbose) cout << "ICP break: error small: "   <<e<<endl;               break; }
-		if(fabs(e-old_err)<0.0001) { if(mVerbose) cout << "ICP break: err diff small: "<<fabs(e-old_err)<<endl; break; }
+		if(     e  < 1e-5)       { if(mVerbose) cout << "ICP break: error small: "   <<e<<endl;               break; }
+		if(fabs(e-old_err)<1e-5) { if(mVerbose) cout << "ICP break: err diff small: "<<fabs(e-old_err)<<endl; break; }
 		old_err = e;
 
 		// step 4: compute optimal motion (Horn, 1987)
@@ -327,18 +343,23 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		TQuat q(getQuat(matchlist.begin(), mend));
 		mDeterminedRotation = q * mDeterminedRotation ;
 
-		// TODO: Determine Scale factor (necessary ???)
-		// - 4b: Determine Translation from Npo matches.
+		// - 4b: Determine Scale factor  (model/query)
+		//scale = sqrt(accumulate(matchlist.begin(),mend,0.0,TupleNLength2Acc<2,TMatch>())  
+		//		/    accumulate(matchlist.begin(),mend,0.0,TupleNLength2Acc<1,TMatch>()) );
+
+		// - 4c: Determine Translation from Npo matches.
 		t = boost::numeric::ublas::scalar_vector<TPrecision>(PtDim,0);
 		for(mit = matchlist.begin(); mit!=mend; mit++) {
-			t += (TVec)(*mit->template get<2>()) - (TVec)(rotate(*mit->template get<1>(), q));
+			t += (TVec)(*mit->template get<2>()) - scale*(TVec)(rotate(*mit->template get<1>(), q));
 		}
 		t/=(TPrecision)matchlist.size();
 		mDeterminedTranslation += t;
 
 		// step 5: Transform _all_ points according to R, t
+		//VectorScaler scaler;
 		std::transform(begin, end, begin, boost::bind<TPoint>(rotate, ::_1, q));
 		std::transform(begin, end, begin, boost::bind<TPoint>(translate, ::_1, t));
+		//std::transform(begin, end, begin, boost::bind<TPoint>(scaler, ::_1, scale));
 		nIter--;
 	}
 	mDeterminedTranslation += -rotateVector(queryCentroid,mDeterminedRotation) +mModelCentroid;
