@@ -27,7 +27,7 @@ namespace util{
 #define ICP_FQCLASS ICP<PtDim,T,AccessorT>
 
 
-ICP_TMPL
+template<int PtDim, class T, class AccessorT = KDTree::_Bracket_accessor<T> >
 class ICP
 {
 	public:
@@ -86,8 +86,8 @@ class ICP
 			{ return d + std::accumulate(b.begin(),b.end(),0.0,boost::lambda::_1 + boost::lambda::_2 * boost::lambda::_2); } };
 
 		/// Construct an ICP object
-		ICP(float lambda=2.f, int overlapiter=10, float trim_alpha=0.4, float trim_beta=1.0) 
-			: mVerbose(false), mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta)
+		ICP(int maxiter=1000, float lambda=2.f, int overlapiter=10, float trim_alpha=0.4, float trim_beta=1.0) 
+			: mVerbose(false), mLambda(lambda), mOverlapIterations(overlapiter), mTrimAlpha(trim_alpha), mTrimBeta(trim_beta),mMaxIters(maxiter)
 		{ }
 
 		/// Register a model. 
@@ -118,8 +118,22 @@ class ICP
 		/// Returns the determined rotation as a quaternion.
 		inline TQuat getRot(){return mDeterminedRotation;}
 
+		/// Returns the error after matching
+		inline TPrecision getMatchingError(){return mFinalError;}
+
+		/// Returns the number of iterations needed for matching
+		inline unsigned int getMatchItersPerformed(){return mMatchItersPerformed;}
+
 		/// set verbosity
 		inline void setVerbose(bool b){mVerbose=b;}
+
+		/// set max iteration number for matching
+		inline void setMaxIters(int iters){mMaxIters=iters;}
+
+		inline typename TTree::const_iterator begin()const{return mModelTree.begin();}
+		inline typename TTree::const_iterator end()const{return mModelTree.end();}
+		inline typename TTree::const_reverse_iterator rbegin()const{return mModelTree.rbegin();}
+		inline typename TTree::const_reverse_iterator rend()const{return mModelTree.rend();}
 
 	private:
 		bool       mVerbose;
@@ -128,11 +142,14 @@ class ICP
                                            
 		TQuat      mDeterminedRotation;    ///< the determined rotation
 		TVec       mDeterminedTranslation; ///< the determined translation
+		TPrecision mFinalError;            ///< the error at the end
+		unsigned int mMatchItersPerformed; ///< the number of iterations performed for matching
 
-		const float  mLambda;              ///< parameter of phi-function in Chetverikov (Robust Euclidean alignment...)
-		const int    mOverlapIterations;   ///< how many iterations of golden section search for optimal overlap
-		const float  mTrimAlpha;           ///< trimming parameter: lower bound of interval to search for minimum of phi(xi)
-		const float  mTrimBeta;            ///< trimming parameter: upper bound of interval to search for minimum of phi(xi)
+		float  mLambda;              ///< parameter of phi-function in Chetverikov (Robust Euclidean alignment...)
+		int    mOverlapIterations;   ///< how many iterations of golden section search for optimal overlap
+		float  mTrimAlpha;           ///< trimming parameter: lower bound of interval to search for minimum of phi(xi)
+		float  mTrimBeta;            ///< trimming parameter: upper bound of interval to search for minimum of phi(xi)
+		int    mMaxIters;            ///< maximum number of iterations
 
 		/// determine the centroid of the points between begin and end. 
 		/// Assumes that they are convertible to TVec.
@@ -297,7 +314,7 @@ void ICP_FQCLASS::match(Iter begin, Iter end){
 ICP_TMPL
 template<class Iter, class Translator, class Rotator>
 void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rotate){
-	int nIter = 10000;
+	int nIter = mMaxIters;
 	mDeterminedRotation    = TQuat(1,0,0,0);
 	typedef boost::tuple<TPrecision, Iter,typename TTree::iterator>  TMatch; 
 	typedef std::vector<TMatch>                                      TMatchList;
@@ -328,14 +345,14 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		if(nIter==0)               { if(mVerbose) cout << "ICP break: nIter 0"<<endl;                           break; }
 
 		// trimming: determine which overlap parameters to use
-		int Npo; TPrecision e;
-		boost::tie(e,Npo) = getTrimmingParams(matchlist.begin(),p, TupleNAcc<0,TMatch>()); 
-		if(mVerbose) cout << "ICP Trimmed error ("<<Npo<<"/"<<p <<" is "<< e<<endl;
+		int Npo;
+		boost::tie(mFinalError,Npo) = getTrimmingParams(matchlist.begin(),p, TupleNAcc<0,TMatch>()); 
+		if(mVerbose) cout << "ICP Trimmed error ("<<Npo<<"/"<<p <<" is "<< mFinalError<<endl;
 		mend = matchlist.begin() + Npo;
 
-		if(     e  < 1e-5)       { if(mVerbose) cout << "ICP break: error small: "   <<e<<endl;               break; }
-		if(fabs(e-old_err)<1e-5) { if(mVerbose) cout << "ICP break: err diff small: "<<fabs(e-old_err)<<endl; break; }
-		old_err = e;
+		if(     mFinalError  < 1e-5)       { if(mVerbose) cout << "ICP break: error small: "   <<mFinalError<<endl;               break; }
+		if(fabs(mFinalError-old_err)<1e-5) { if(mVerbose) cout << "ICP break: err diff small: "<<fabs(mFinalError-old_err)<<endl; break; }
+		old_err = mFinalError;
 
 		// step 4: compute optimal motion (Horn, 1987)
 		// - convention: left: Query;  right: Model
@@ -349,9 +366,8 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 
 		// - 4c: Determine Translation from Npo matches.
 		t = boost::numeric::ublas::scalar_vector<TPrecision>(PtDim,0);
-		for(mit = matchlist.begin(); mit!=mend; mit++) {
+		for(mit = matchlist.begin(); mit!=mend; mit++) 
 			t += (TVec)(*mit->template get<2>()) - scale*(TVec)(rotate(*mit->template get<1>(), q));
-		}
 		t/=(TPrecision)matchlist.size();
 		mDeterminedTranslation += t;
 
@@ -363,6 +379,7 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 		nIter--;
 	}
 	mDeterminedTranslation += -rotateVector(queryCentroid,mDeterminedRotation) +mModelCentroid;
+	mMatchItersPerformed = mMaxIters - nIter;
 }
 #undef ICP_TMPL    
 #undef ICP_FQCLASS 
