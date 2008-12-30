@@ -28,6 +28,7 @@ struct GraphFromAdj::Impl{
 	typedef Graph::vertex_iterator vertex_iterator;
 
 	Impl(const ProbAdjPerm&, unsigned int idx1, unsigned int idx2);
+	Impl(const ProbAdjPerm&);
 	~Impl();
 	double  getDist(int i);
 	double  getDistFromIdx1(int i);
@@ -42,6 +43,8 @@ struct GraphFromAdj::Impl{
 	pair<vertex_descriptor,vertex_descriptor> mPivot; 
 	std::vector<double> mDistanceMapA;
 	std::vector<double> mDistanceMapB;
+	std::vector<double> mHeightMapA;
+	std::vector<double> mHeightMapB;
 };
 
 double
@@ -49,12 +52,17 @@ GraphFromAdj::Impl::getDist(int idx){
 	vertex_descriptor v = bgl::vertex(idx, mG);
 	if(v == mPivot.first)  return 0.0;
 	if(v == mPivot.second) return mTotalDistance;
+	I(mPivot.first != mPivot.second); 
 	
 	double a = mDistanceMapA[v];
 	double b = mDistanceMapB[v];
 #ifndef NDEBUG
-	if(a+b<mTotalDistance)
-		cerr << "Warning: Triangle Inequality does not hold!"<<endl;
+	if(a!=a)
+		cerr << "Warning: NaN found in mDistanceMapA!"<<endl;
+	if(b!=b)
+		cerr << "Warning: NaN found in mDistanceMapB!"<<endl;
+	if(a+b<mTotalDistance-1E10)
+		cerr << "Warning: Triangle Inequality does not hold: "<< (mTotalDistance-a-b)<<endl;
 #endif
 	double tmp = (mTotalDistance*mTotalDistance - a*a - b*b) / (-2*a*b);
 	double gamma;
@@ -63,6 +71,8 @@ GraphFromAdj::Impl::getDist(int idx){
 	else if(tmp> 1) gamma = 0;
 	else            gamma = acos( tmp );
 	double s_gamma = sin(gamma);
+	// TODO: punkt mit maximaler hoehe als seed fuer 2. dim
+	double h = a*b*s_gamma/mTotalDistance; // height
 	tmp = b/mTotalDistance*s_gamma;
 	double x = (tmp>1)?0:(a * sqrt(1-tmp*tmp));
 	return x;
@@ -120,6 +130,7 @@ GraphFromAdj::Impl::Impl(const ProbAdjPerm& pap, unsigned int idx1, unsigned int
 		 mG(pap.getAdjMat()->size1())
 		,mDistanceMapA(pap.getAdjMat()->size1())
 		,mDistanceMapB(pap.getAdjMat()->size1())
+		,mPivot(0,0)
 {
 	AdjMat::AdjMatT& A = *pap.getAdjMat(); 
 	unsigned int n=A.size1();
@@ -135,6 +146,26 @@ GraphFromAdj::Impl::Impl(const ProbAdjPerm& pap, unsigned int idx1, unsigned int
 	setIdx2(idx2);
 }
 
+// Impl constructor
+GraphFromAdj::Impl::Impl(const ProbAdjPerm& pap)
+	:
+		 mG(pap.getAdjMat()->size1())
+		,mDistanceMapA(pap.getAdjMat()->size1())
+		,mDistanceMapB(pap.getAdjMat()->size1())
+		,mPivot(0,0)
+{
+	AdjMat::AdjMatT& A = *pap.getAdjMat(); 
+	unsigned int n=A.size1();
+	mWeightMap = get(bgl::edge_weight,mG);
+	for(unsigned int i=0;i<n;i++)
+		for(unsigned int j=0;j<n;j++){
+			edge_descriptor e; bool inserted;
+			boost::tie(e, inserted) = bgl::add_edge(i,j,mG);
+			if(A(i,j)<0.0000001) mWeightMap[e] = INT_MAX;
+			else                 mWeightMap[e] = A(i,j);
+		}
+}
+
 // Impl destructor
 GraphFromAdj::Impl::~Impl(){
 }
@@ -145,6 +176,10 @@ GraphFromAdj::Impl::~Impl(){
  **********************************************************/
 GraphFromAdj::GraphFromAdj(const ProbAdjPerm& pap, unsigned int idx1, unsigned int idx2)
 	:mImpl(new Impl(pap,idx1,idx2))
+{
+}
+GraphFromAdj::GraphFromAdj(const ProbAdjPerm& pap)
+	:mImpl(new Impl(pap))
 {
 }
 

@@ -11,6 +11,7 @@ class GraphFromAdj
 {
   public:
     GraphFromAdj(const ProbAdjPerm&, unsigned int idx1, unsigned int idx2);
+    GraphFromAdj(const ProbAdjPerm&);
     virtual ~GraphFromAdj();
 
 	double getDist(int i);
