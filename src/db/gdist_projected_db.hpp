@@ -13,10 +13,11 @@ class GDistProjectedDB{
 		typedef TICP                                  value_type;
 		typedef std::vector<TICP>                     TICPVec;
 		typedef TICPVec::iterator                     iterator;
+		typedef std::vector<point_type>               TCloud;
 	public:
 		inline iterator begin(){return mDB.begin();}
 		inline iterator end()  {return mDB.end();}
-		void add(const std::string& id, const ProbAdjPerm& pap);
+		TCloud add(const std::string& id, const ProbAdjPerm& pap);
 		void configure();
 		inline const std::vector<std::string>& getIDs(){return mIDs;}
 	private:
