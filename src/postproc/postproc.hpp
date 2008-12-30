@@ -1,6 +1,7 @@
 #ifndef __POSTPROC_HPP__
 #define __POSTPROC_HPP__
 #include <Serialization.hpp>
+#include <vector>
 class AdjMatGen;
 class ProbAdjPerm;
 
@@ -26,6 +27,7 @@ class PostProc
 
 	virtual void atStart();
 	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob);
+	virtual void atSeriation(AdjMatGen& gen, std::vector<boost::numeric::ublas::vector<double> >& cloud, ProbAdjPerm& prob);
 	virtual void atEnd();
 
   private:

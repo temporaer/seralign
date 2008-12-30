@@ -2,6 +2,7 @@
 #define __GRAPHVIZPRINT_HPP__
 
 #include <iostream>
+#include <vector>
 #include <fstream>
 
 #include "postproc.hpp"
@@ -26,6 +27,7 @@ class GraphVizPrint : public PostProc
 
 	virtual void atStart();
 	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob);
+	virtual void atSeriation(AdjMatGen& gen, std::vector<boost::numeric::ublas::vector<double> >& cloud, ProbAdjPerm& prob);
 	virtual void atEnd();
 
 

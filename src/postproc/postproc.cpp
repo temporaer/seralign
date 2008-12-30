@@ -25,5 +25,9 @@ void PostProc::atEnd()
 void PostProc::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
 }
+void PostProc::atSeriation(AdjMatGen& gen, std::vector<boost::numeric::ublas::vector<double> >& cloud, ProbAdjPerm& prob)
+{
+}
+
 
 namespace{ registerInFactory<PostProc, PostProc> registerBase("PostProc"); }
