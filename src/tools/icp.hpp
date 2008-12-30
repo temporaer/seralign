@@ -327,7 +327,7 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 	std::transform(begin,end,begin,boost::bind<TPoint>(translate,::_1,-queryCentroid));
 
 	matchlist.resize(p); 
-	typename TMatchList::iterator oit = matchlist.begin(), mit, mend;
+	typename TMatchList::iterator mit, mend;
 	TPrecision old_err = INT_MAX;
 	TMat       R(PtDim,PtDim);
 	TVec       t(PtDim);
