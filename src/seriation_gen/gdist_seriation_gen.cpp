@@ -68,7 +68,8 @@ Serialization GDistSeriationGen::operator()(const ProbAdjPerm& pap)
 
 	if(mNormalize){
 		// min is 0 already, all positive --> just div by max
-		pos /= *max_element(pos.begin(),pos.end());
+		double div = *max_element(pos.begin(),pos.end());
+		pos /= div; // copy! otherwise max changes in between
 	}
 
 	Serialization ret(n);
