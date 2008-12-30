@@ -1,5 +1,5 @@
 library(vegan)
-path = "/tmp/"
+path = "./"
 files=dir( path=path, pattern=".*csv" )
 act<<- read.delim("../188/is_active.txt", header=FALSE, sep=" ")
 for (f in files){
