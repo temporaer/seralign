@@ -45,12 +45,12 @@ BOOST_AUTO_TEST_CASE( testIncreasingDegree )
 	ds.sort( pap );
 	
 	for(int s=0;s<n;s++){
-		GraphFromAdj g(pap,s,n-s);
-		BOOST_CHECK_CLOSE(g.getDist(s),0.0, 0.01);
+		GraphFromAdj g(pap,s,n-s-1);
+		BOOST_CHECK_CLOSE(g.getDist(0,s),0.0, 0.01);
 		for(int i=0;i<n;i++){
 			if(i==s)
 				continue;
-			BOOST_CHECK_GT(g.getDist(i),0.0099);
+			BOOST_CHECK_GT(g.getDist(0,i),0.0099);
 		}
 	}
 }
