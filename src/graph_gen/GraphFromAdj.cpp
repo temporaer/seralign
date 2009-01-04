@@ -58,7 +58,7 @@ struct GraphFromAdj::Impl{
 	double  heightFoot(double a, double b, double g);
 	void    setA(unsigned int k, int i);
 	void    setB(unsigned int k, int i);
-	unsigned int     getFarthestFrom(unsigned int k, const Map&);
+	unsigned int     getFarthestFrom(unsigned int k, const vertex_descriptor& i);
 	unsigned int     getFarthestFromA(unsigned int k);
 	unsigned int     getFarthestFromB(unsigned int k);
 	Graph            mG;
@@ -100,9 +100,9 @@ double GraphFromAdj::Impl::getDist(unsigned int k, const vertex_descriptor& i, c
 		dist2 -= dxij*dxij;
 	}
 #ifndef NDEBUG
-	if(dist2<0) cerr << "Warning: getDist: dist2<0"<<endl;
+	if(dist2<-1E-5) cerr << "Warning: getDist: 0>dist2="<<dist2<<endl;
 #endif
-	return sqrt(dist2);
+	return sqrt(fabs(dist2));
 }
 
 double 
@@ -110,10 +110,13 @@ GraphFromAdj::Impl::heightFoot(double a, double b, double g){
 #ifndef NDEBUG
 	if(a!=a) cerr << "Warning: NaN found in distA!"<<endl;
 	if(b!=b) cerr << "Warning: NaN found in distB!"<<endl;
+	if(a<-1E-6)  cerr << "Warning: a<0!"<<endl;
+	if(b<-1E-6)  cerr << "Warning: b<0!"<<endl;
+	if(g<-1E-6)  cerr << "Warning: g<0!"<<endl;
 	if(a+b<g-1E10)
 		cerr << "Warning: Triangle Inequality does not hold: "<< (g-a-b)<<endl;
 	if(g!=g) cerr << "Warning: Base is NaN!"<<endl;
-	if(g==0) cerr << "Warning: Base is 0!"<<endl;
+	if(g==0 && b>0) cerr << "Warning: Base is 0!"<<endl;
 #endif
 	//cout << "heightFoot: " << V(a)<<V(b)<<V(g)<<endl;
 	if(b==0) return a;
@@ -132,19 +135,32 @@ GraphFromAdj::Impl::heightFoot(double a, double b, double g){
 }
 
 unsigned int
-GraphFromAdj::Impl::getFarthestFrom(unsigned int k, const Map& m){
-	return distance(m.begin(),max_element(m.begin(),m.end()));
+GraphFromAdj::Impl::getFarthestFrom(unsigned int k, const vertex_descriptor& v){ 
+	I(mDistAndHeights.size()>k);  
+	int    best     = 0;
+	double best_val = -1.0;
+	int    n = mDistAndHeights[k].distA.size();
+	for(int i=0; i<n; i++){
+		vertex_descriptor w = bgl::vertex(i,mG); 
+		double val  = getDist(k,v,w);
+		if(val > best_val){
+			best     = i;
+			best_val = val;
+		}
+	}
+	I(best_val >= 0);
+	return best;
 }
 
 unsigned int
 GraphFromAdj::Impl::getFarthestFromA(unsigned int k){
 	I(mDistAndHeights.size() > k);
-	return getFarthestFrom(k, mDistAndHeights[k].distA);
+	return getFarthestFrom(k, mDistAndHeights[k].A);
 }
 unsigned int
 GraphFromAdj::Impl::getFarthestFromB(unsigned int k){
 	I(mDistAndHeights.size() > k);
-	return getFarthestFrom(k, mDistAndHeights[k].distB);
+	return getFarthestFrom(k, mDistAndHeights[k].B);
 }
 void
 GraphFromAdj::Impl::setA(unsigned int k, int i){ 

@@ -17,8 +17,8 @@ class GraphFromAdj
 	double getProjection(unsigned int k, int i);
 	double getDist(unsigned int k, int i, int j);
 	double getTotalDist(unsigned int k);
-	double getDistFromA(unsigned int k, int i);
-	double getDistFromB(unsigned int k, int i);
+	//double getDistFromA(unsigned int k, int i);
+	//double getDistFromB(unsigned int k, int i);
 	void   setA(unsigned int k, int i);
 	void   setB(unsigned int k, int i);
 	unsigned int    getFarthestFromA(unsigned int k);
