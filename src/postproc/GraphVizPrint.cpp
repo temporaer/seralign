@@ -48,7 +48,7 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, vector<ublas::vector<double> >& 
 	for(unsigned int i=0; i<n; i++)
 	{
 		mOS	<< "  n" << i << "[" // use ID in adj-matrix
-			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, ser)<<"\""<<",pos=\""<<(int)(100*cloud[i][0])<<","<<(int)(100*cloud[i][1])<<"\""
+			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, ser)<<"\""<<",pos=\""<<(int)(1000*cloud[i][0])<<","<<(int)(1000*cloud[i][1])<<"\""
 			<<gen.getGraphVizNodeAttribs(ranks[i])<<"];"<<endl;
 	}
 	AdjMat::AdjMatT& A = *prob.getAdjMat();
