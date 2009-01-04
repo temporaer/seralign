@@ -52,7 +52,7 @@ Serialization GDistSeriationGen::operator()(const ProbAdjPerm& pap)
 	Serialization::PosT  pos(n);
 	Serialization::RankT ranks(n);
 	for(int i=0;i<n;i++){
-		pos(i)   = g.getDist(i);
+		pos(i)   = g.getProjection(0,i);
 #ifndef NDEBUG
 		if(pos(i)!=pos(i))
 			cerr <<"Warning: Distance is NaN for index "<<i<< endl;
