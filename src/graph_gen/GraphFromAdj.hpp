@@ -14,14 +14,15 @@ class GraphFromAdj
     GraphFromAdj(const ProbAdjPerm&, int dim=3);
     virtual ~GraphFromAdj();
 
-	double getDist(int refid, int i);
-	double getTotalDist(int refid);
-	double getDistFromA(int refid, int i);
-	double getDistFromB(int refid, int i);
-	void   setA(int refid, int i);
-	void   setB(int refid, int i);
-	unsigned int    getFarthestFromA(int refid);
-	unsigned int    getFarthestFromB(int refid);
+	double getProjection(unsigned int k, int i);
+	double getDist(unsigned int k, int i, int j);
+	double getTotalDist(unsigned int k);
+	double getDistFromA(unsigned int k, int i);
+	double getDistFromB(unsigned int k, int i);
+	void   setA(unsigned int k, int i);
+	void   setB(unsigned int k, int i);
+	unsigned int    getFarthestFromA(unsigned int k);
+	unsigned int    getFarthestFromB(unsigned int k);
 
   private:
 
