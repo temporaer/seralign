@@ -140,11 +140,11 @@ IF( CTAGS_BINARY )
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating tags" VERBATIM)
 ENDIF( CTAGS_BINARY )
 FIND_PROGRAM( MKID_BINARY mkid )
-IF( MKID_BINARY )
-	add_custom_command (TARGET hrmain 
-		POST_BUILD COMMAND mkid --include "C C++"
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating global-tags" VERBATIM)
-ENDIF( MKID_BINARY )
+#IF( MKID_BINARY )
+#    add_custom_command (TARGET hrmain 
+#        POST_BUILD COMMAND mkid --include "C C++"
+#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMENT "Creating global-tags" VERBATIM)
+#ENDIF( MKID_BINARY )
 target_link_libraries(hrmain 
 	${Boost_LIBRARIES}  
 	${NANA_LIBRARIES} 
