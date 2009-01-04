@@ -44,7 +44,19 @@ BOOST_FIXTURE_TEST_SUITE( suite, Fixture )
 
 
 
-BOOST_AUTO_TEST_CASE( testIncreasingDegree )
+BOOST_AUTO_TEST_CASE( testFastmapping )
+{
+	int from, to;
+	from = 0;
+	to   = 1;
+	GraphFromAdj g(pap,from,to);
+	int i = g.getFarthestFromA(0); // level 0: find node far away from `from'=0
+	BOOST_CHECK_EQUAL(i,1);        // level 0: should be node 1
+	g.setA(1,2);                 // level 1: set root A=2
+	i = g.getFarthestFromA(1);   // level 1: find node far away from A=2
+	BOOST_CHECK_EQUAL(i,3);      // level 1: should be node 3
+}
+BOOST_AUTO_TEST_CASE( testProjection )
 {
 	int from,to;
 	if(1){
