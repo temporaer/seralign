@@ -30,6 +30,6 @@ class GDistProjectedDB{
 
 		// how good this is for mapping (=longest distance from node i)
 		boost::tuple<float,unsigned int,unsigned int>  
-			getFastmapQuality(GraphFromAdj&, int seed);
+			getFastmapQuality(GraphFromAdj&,int k, int seed);
 };
 #endif /* __GDIST_PROJECTED_DB_HPP__ */

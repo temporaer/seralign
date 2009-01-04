@@ -34,12 +34,12 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	int n = pap.getAdjMat()->size1();
 	tuple<float, unsigned int, unsigned int> bestPair(0,0,1);
 	for(int i=0; i< 2*mFastmapTries; i++){
-		tuple<float, unsigned int, unsigned int> p = getFastmapQuality(g, n*drand48());
+		tuple<float, unsigned int, unsigned int> p = getFastmapQuality(g, 0, n*drand48());
 		if(p.get<0>() > bestPair.get<0>())
 			bestPair = p;
 	}
-	g.setIdx1(bestPair.get<1>());
-	g.setIdx2(bestPair.get<2>());
+	g.setA(0,bestPair.get<1>());
+	g.setB(0,bestPair.get<2>());
 
 	// convert graph to point-cloud:
 	TCloud cloud(n, point_type(3,0));
@@ -48,7 +48,7 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	Serialization::PosT  pos(n), pos2(n);
 	Serialization::RankT ranks(n), ranks2(n);
 	for(int i=0;i<n;i++){
-		pos(i)   = g.getDist(i);
+		pos(i)   = g.getProjection(0,i);
 #ifndef NDEBUG
 		if(pos(i)!=pos(i))
 			cerr <<"Warning: Distance is NaN for index "<<i<< endl;
@@ -82,16 +82,17 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	for(int i=n/2 - mFastmapTries; i<=n/2+mFastmapTries; i++){
 		if(i<0)  continue;
 		if(i>=n) continue;
-		tuple<float, unsigned int, unsigned int> p = getFastmapQuality(g, ranks[i]);
+		//tuple<float, unsigned int, unsigned int> p = getFastmapQuality(g, 1, ranks[i]);
+		tuple<float, unsigned int, unsigned int> p = getFastmapQuality(g, 1, n*drand48());
 		if(p.get<0>() > bestPair.get<0>())
 			bestPair = p;
 	}
-	g.setIdx1(bestPair.get<1>());
-	g.setIdx2(bestPair.get<2>());
+	g.setA(1,bestPair.get<1>());
+	g.setB(1,bestPair.get<2>());
 
 	// project everything on line between the two vertices
 	for(int i=0;i<n;i++){
-		pos2(i)   = g.getDist(i);
+		pos2(i)   = g.getProjection(1,i);
 #ifndef NDEBUG
 		if(pos2(i)!=pos2(i)) cerr <<"Warning: Distance is NaN for index "<<i<< endl;
 #endif
@@ -135,13 +136,15 @@ void GDistProjectedDB::configure()
 }
 
 boost::tuple<float,unsigned int,unsigned int>  
-GDistProjectedDB::getFastmapQuality(GraphFromAdj& g, int seed)
+GDistProjectedDB::getFastmapQuality(GraphFromAdj& g, int k, int seed)
 {
 	unsigned int tmp1, tmp2;
-	g.setIdx1(seed);
-	tmp1 = g.getFarthestFromIdx1();
-	g.setIdx1(tmp1);
-	tmp2 = g.getFarthestFromIdx1();
-	return make_tuple(g.getDistFromIdx1(tmp1),tmp1,tmp2) ;
+	g.setA(k, seed);
+	tmp1 = g.getFarthestFromA(k);
+	g.setA(k, tmp1);
+	tmp2 = g.getFarthestFromA(k);
+	float dist = g.getProjection(k,tmp2);
+	//cout << "getFastmapQuality: dist="<<dist<<" tmp1="<<tmp1<<" tmp2="<<tmp2<<endl; 
+	return make_tuple(dist,tmp1,tmp2) ;
 }
 
