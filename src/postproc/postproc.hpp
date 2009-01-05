@@ -29,6 +29,7 @@ class PostProc
 
 	virtual void atStart();
 	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob);
+	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, const std::string& ref="");
 	virtual void atSeriation(AdjMatGen& gen, const DBCloud&, ProbAdjPerm& prob);
 	virtual void atEnd();
 

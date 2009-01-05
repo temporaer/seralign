@@ -23,25 +23,30 @@ bool AdjMatGen::hasNext()
 	return true;
 }
 
-string AdjMatGen::getPlainDescription(int ser_idx, const Serialization&)
+string AdjMatGen::getPlainDescription(int ser_idx, const Serialization&, const std::string& ref)
 {
 	throw runtime_error("AdjMatGen::getPlainDescription() not implemented for subclass"); 
 }
-string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&)
+string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&, const std::string& ref)
 {
 	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 
 }
 
-int AdjMatGen::getClassID()
+int AdjMatGen::getClassID(const std::string& ref)
 {
 	return 0;
 }
-string AdjMatGen::getGraphID()
+boost::shared_ptr<AdjMat::AdjMatT> 
+AdjMatGen::getAdjMat(const std::string& ref)
+{
+	throw runtime_error("AdjMatGen::getAdjMat() not implemented for subclass"); 
+}
+string AdjMatGen::getGraphID(const std::string& ref)
 {
 	throw runtime_error("AdjMatGen::getGraphID() not implemented for subclass"); 
 }
 
-std::string AdjMatGen::getGraphVizNodeAttribs(int idx)
+std::string AdjMatGen::getGraphVizNodeAttribs(int idx, const std::string& ref)
 {
 	return string("");
 }

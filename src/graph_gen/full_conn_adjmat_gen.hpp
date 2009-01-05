@@ -20,10 +20,10 @@ class FullConnAdjmatGen: public AdjMatGen{
 		virtual ProbAdjPerm operator()();
 		virtual ~FullConnAdjmatGen();
 		virtual bool hasNext();
-		virtual std::string getPlainDescription(int ser_idx, const Serialization&);
-		virtual std::string getGraphID();
-		virtual std::string getGraphVizNodeAttribs(int idx); //< should start with a comma!
-		virtual int getClassID();          ///< which class the graph belongs to
+		virtual std::string getPlainDescription(int ser_idx, const Serialization&, const std::string&);
+		virtual std::string getGraphID(const std::string&);
+		virtual std::string getGraphVizNodeAttribs(int idx, const std::string&); //< should start with a comma!
+		virtual int getClassID(const std::string&);          ///< which class the graph belongs to
 
 		inline void  setSize(int i){mSize=i;}
 		inline int   getSize()     {return mSize;}

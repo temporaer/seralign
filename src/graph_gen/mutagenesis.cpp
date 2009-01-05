@@ -34,8 +34,8 @@ struct Mutagenesis::Impl{
 	ProbAdjPerm nextGraph();
 	void open();
 	bool hasNext();
-	string getPrologDescription(int idx,const Serialization&);
-	string getPlainDescription(int idx,const Serialization&);
+	string getPrologDescription(int idx,const Serialization&,const string& ref);
+	string getPlainDescription(int idx,const Serialization&,const string& ref);
 
 	double kernelNull(int i, int j);
 	double kernelTypeAndWeightEq(int i, int j);
@@ -47,20 +47,24 @@ struct Mutagenesis::Impl{
 	bool mIncludeGraphNeighbours;
 	int  mNumSequenceNeighbours;
 	
-	boost::shared_ptr<AdjMat::AdjMatT> mA_ptr;
-	vector<string> mNames;
-	vector<string> mTypes;
-	vector<string> mParam1;
-	vector<string> mParam2;
-	string         mName;
-	int            mClassID;
+	struct Descriptor{
+		boost::shared_ptr<AdjMat::AdjMatT> mA_ptr;
+		vector<string> mNames;
+		vector<string> mTypes;
+		vector<string> mParam1;
+		vector<string> mParam2;
+		string         mName;
+		int            mClassID;
+	};
+	map<string, Descriptor> mDescriptors;
+	Descriptor              mCurDesc;
 };
 
 double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j){
 	double d = 0.0;
 	int    n = 0;
-	if(mTypes[i]  == mTypes[j])  d+=1; n++;
-	if(mParam1[i] == mParam1[j]) d+=1; n++;
+	if(mCurDesc.mTypes[i]  == mCurDesc.mTypes[j])  d+=1; n++;
+	if(mCurDesc.mParam1[i] == mCurDesc.mParam1[j]) d+=1; n++;
 	return d/(2*n);
 }
 double Mutagenesis::Impl::kernelTypeSum(int i, int j){
@@ -73,24 +77,25 @@ double Mutagenesis::Impl::kernelTypeSum(int i, int j){
 	m["h"]  = 0.1;
 	m["c"]  = 0.4;
 
-	d += fabs(m[mTypes[i]] - m[mTypes[j]]);
+	d += fabs(m[mCurDesc.mTypes[i]] - m[mCurDesc.mTypes[j]]);
 
 	return d;
 }
 double Mutagenesis::Impl::kernelTypeAndWeightEq(int i, int j){
 	double d = 0.0;
-	if(mTypes[i] == mTypes[j]) d+=0.25;
-	if(mParam1[i] == mParam1[j]) d+=0.25;
+	if(mCurDesc.mTypes[i] == mCurDesc.mTypes[j]) d+=0.25;
+	if(mCurDesc.mParam1[i] == mCurDesc.mParam1[j]) d+=0.25;
 	return d;
 }
 double Mutagenesis::Impl::kernelNull(int i, int j){
 	return 0.0;
 }
-string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s){
+string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s, const string&ref){
+	Descriptor& d = (ref=="")?mCurDesc : mDescriptors[ref];
 	stringstream str;
-	AdjMat::AdjMatT& A = *mA_ptr;
+	AdjMat::AdjMatT& A = *d.mA_ptr;
 	unsigned int idx = s.getRanks()[ser_idx];
-	str << mTypes[idx];
+	str << d.mTypes[idx];
 	if(mIncludeGraphNeighbours){
 		str << "[";
 		string s = "";
@@ -98,7 +103,7 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s)
 		for(unsigned int i=0;i<A.size1();i++){
 			if(i==idx)              continue;
 			if(col(i) < 0.0001)     continue;
-				s += mTypes[i];
+				s += d.mTypes[i];
 		}
 		sort(s.begin(),s.end());
 		str << s;
@@ -106,21 +111,22 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s)
 	}
 	return str.str();
 }
-string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s){
+string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s, const string& ref){
+	Descriptor& d = (ref=="")?mCurDesc : mDescriptors[ref];
 	unsigned int idx = s.getRanks()[ser_idx];
-	if(idx>=mTypes.size()){
-		L("idx = %d, size = %d\n",idx,mTypes.size()); 
+	if(idx>=d.mTypes.size()){
+		L("idx = %d, size = %d\n",idx,d.mTypes.size()); 
 		throw runtime_error("Mutagenesis::getPrologDescription(): Index too large");
 	}
 	ostringstream o;
-	if(mTypes[idx] == "b"){
+	if(d.mTypes[idx] == "b"){
 		// bond
-		o << "chemBond("<<mParam1[idx] << ")";
+		o << "chemBond("<<d.mParam1[idx] << ")";
 	}else{
 		// atom
 		//o << "chemAtom(" << mName <<","<< mNames[idx] << "," << mTypes[idx] << ")";
-		o << "chemAtom(" << mTypes[idx] << ")";
-		o << ";weight(" << mParam1[idx] << ")";
+		o << "chemAtom(" << d.mTypes[idx] << ")";
+		o << ";weight(" << d.mParam1[idx] << ")";
 	}
 	for(int i=-mNumSequenceNeighbours;i<=mNumSequenceNeighbours;i++){
 		if(i==0)                continue;
@@ -128,17 +134,17 @@ string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s
 		if(nidx<0)              continue;
 		if(nidx>=(int)s.getRanks().size()) continue;
 		int idx = s.getRanks()[nidx];             // idx: original position of neighbour
-		if(mTypes[idx]!="b"){
-			o << ";neighChemAtom("<<mTypes[idx]<<")";
+		if(d.mTypes[idx]!="b"){
+			o << ";neighChemAtom("<<d.mTypes[idx]<<")";
 		}
 	}
 	if(mIncludeGraphNeighbours){
-		AdjMat::AdjMatT& A = *mA_ptr;
+		AdjMat::AdjMatT& A = *d.mA_ptr;
 		ublas::vector<double> col = ublas::column(A,idx);
 		for(unsigned int i=0;i<A.size1();i++){
 			if(i==idx)              continue;
 			if(col(i) < 0.0001)     continue;
-			o << ";graphNeigh("<<mTypes[i]<<")";
+			o << ";graphNeigh("<<d.mTypes[i]<<")";
 		}
 	}
 	return o.str();
@@ -161,9 +167,9 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 	int n = -1;
 
 	getline(mInputStream, line);
-	mName = line;
+	mCurDesc.mName = line;
 	getline(mInputStream, line);
-	mClassID = (line == "pos") ? 1 : 0;
+	mCurDesc.mClassID = (line == "pos") ? 1 : 0;
 
 	while(line.length()>1 && getline(mInputStream, line)){
 		list<string> strvec;
@@ -174,11 +180,11 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 			list<string>::iterator it = strvec.begin();
 			copy(it,strvec.end(),back_inserter(names));
 			n = names.size();
-			mA_ptr.reset(new ublas::matrix<double>(n,n));
+			mCurDesc.mA_ptr.reset(new ublas::matrix<double>(n,n));
 			cnt++;
 			continue;
 		}
-		AdjMat::AdjMatT& A = *mA_ptr;
+		AdjMat::AdjMatT& A = *mCurDesc.mA_ptr;
 		if(A.size1() != strvec.size()-addParams){
 			if(cnt-1 == n)
 				break;
@@ -197,13 +203,13 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 		}
 		cnt++;
 	}
-	mNames = names;
-	mTypes = types;
-	mParam1 = param1;
-	mParam2 = param2;
+	mCurDesc.mNames = names;
+	mCurDesc.mTypes = types;
+	mCurDesc.mParam1 = param1;
+	mCurDesc.mParam2 = param2;
 
 	if(n>0){
-		AdjMat::AdjMatT& A = *mA_ptr;
+		AdjMat::AdjMatT& A = *mCurDesc.mA_ptr;
 		for(int i=0;i<n;i++)
 			for(int j=i+1;j<n;j++)
 				if(A(i,j)>0.001){
@@ -212,7 +218,8 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 	}
 
 	ProbAdjPerm prob;
-	prob.setAdjMat(mA_ptr);
+	prob.setAdjMat(mCurDesc.mA_ptr);
+	mDescriptors[mCurDesc.mName] = mCurDesc;
 
 	return prob;
 }
@@ -270,21 +277,32 @@ void Mutagenesis::open()
 {
 	mImpl->open();
 }
-string Mutagenesis::getPlainDescription(int ser_idx, const Serialization& s)
+string Mutagenesis::getPlainDescription(int ser_idx, const Serialization& s, const string& ref)
 {
-	return mImpl->getPlainDescription(ser_idx,s);
+	return mImpl->getPlainDescription(ser_idx,s,ref);
 }
-string Mutagenesis::getPrologDescription(int ser_idx,const Serialization& s)
+string Mutagenesis::getPrologDescription(int ser_idx,const Serialization& s, const string& ref)
 {
-	return mImpl->getPrologDescription(ser_idx,s);
+	return mImpl->getPrologDescription(ser_idx,s,ref);
 }
-std::string Mutagenesis::getGraphID()
+boost::shared_ptr<AdjMat::AdjMatT>
+Mutagenesis::getAdjMat(const string&ref)
 {
-	return mImpl->mName;
+	if(ref!="")
+		return mImpl->mDescriptors[ref].mA_ptr;
+	return mImpl->mCurDesc.mA_ptr;
 }
-int Mutagenesis::getClassID()
+std::string Mutagenesis::getGraphID(const string&ref)
 {
-	return mImpl->mClassID;
+	if(ref!="")
+		return mImpl->mDescriptors[ref].mName;
+	return mImpl->mCurDesc.mName;
+}
+int Mutagenesis::getClassID(const string&ref)
+{
+	if(ref!="")
+		return mImpl->mDescriptors[ref].mClassID;
+	return mImpl->mCurDesc.mClassID;
 }
 
 

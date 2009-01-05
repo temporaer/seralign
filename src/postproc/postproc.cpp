@@ -22,6 +22,10 @@ void PostProc::atEnd()
 {
 }
 
+void PostProc::atSeriation(AdjMatGen& gen, Serialization& ser, const std::string& ref)
+{
+}
+
 void PostProc::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
 }

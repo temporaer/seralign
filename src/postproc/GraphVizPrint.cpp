@@ -64,6 +64,41 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, const DBCloud&cloud, ProbAdjPerm
 	seqfoot();
 	mOS.close();
 }
+void GraphVizPrint::atSeriation(AdjMatGen& gen, Serialization& ser, const string& ref)
+{
+	Serialization::RankT ranks(ser.getRanks().size());
+	// WARNING: We assume that the indexes were NOT changed, 
+	// since we do not have access to the permutation matrix!
+	for(unsigned int i=0;i<ranks.size();i++)
+		ranks[i] = ser.getRanks()[i];
+
+	fs::path dir(gCfg().getString("output-dir").c_str());
+	fs::path base_fn(gen.getGraphID(ref) + ".dot");
+	mOS.open((dir/base_fn).string().c_str());
+	unsigned int n=gen.getAdjMat(ref)->size1();
+	
+	mOS << "graph "<< gen.getGraphID(ref)<<" {"<<endl
+		<< "  size = \""<<n<<","<<n<<"\";"<<endl
+		<< "  label = \""<<gen.getGraphID(ref)<<"\\n\\n\";"<<endl ;
+	// print node labels
+	for(unsigned int i=0; i<n; i++)
+	{
+		mOS	<< "  n" << i << "[" // use ID in adj-matrix
+			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, ser,ref)<<"\""
+			<<",pos=\""<<(int)(1000*ser.getPosVecs()[i][0])<<","<<(int)(1000*ser.getPosVecs()[i][1])<<"\""
+			<<gen.getGraphVizNodeAttribs(ranks[i],ref)<<"];"<<endl;
+	}
+	AdjMat::AdjMatT& A = *gen.getAdjMat(ref);
+	for(unsigned int i=0;i<n;i++)
+		for(unsigned int j=i;j<n;j++)
+		{
+			if(A(i,j)>0.0001){
+				mOS << "  n"<<i<<" -- n"<<j<<" [weight="<<A(i,j)<<"];"<<endl;
+			}
+		}
+	seqfoot();
+	mOS.close();
+}
 void GraphVizPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
 	Serialization::RankT ranks(ser.getRanks().size());

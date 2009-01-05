@@ -168,13 +168,15 @@ bool RandomPatAdjmatGen::hasNext()
 	return true;
 }
 
-string RandomPatAdjmatGen::getPlainDescription(int ser_idx, const Serialization&s)
+string RandomPatAdjmatGen::getPlainDescription(int ser_idx, const Serialization&s, const string&ref)
 {
+	I(ref=="");
 	int idx = s.getRanks()[ser_idx];
 	return mNodes[idx].part_of_pattern ? string("X") : string("_");
 }
-string RandomPatAdjmatGen::getPrologDescription(int ser_idx, const Serialization&s)
+string RandomPatAdjmatGen::getPrologDescription(int ser_idx, const Serialization&s, const string&ref)
 {
+	I(ref=="");
 	int idx = s.getRanks()[ser_idx];
 	stringstream str;
 	str	<<"xpos("<<(int)(mNodes[idx].x)<<");"
@@ -182,14 +184,16 @@ string RandomPatAdjmatGen::getPrologDescription(int ser_idx, const Serialization
 	return str.str();
 }
 
-string RandomPatAdjmatGen::getGraphID()
+string RandomPatAdjmatGen::getGraphID(const string&ref)
 {
+	I(ref=="");
 	stringstream str;
 	str<<"randpatgraph_"<<mSize<<"_"<<mPatSize<<"_"<<mRunningID;
 	return str.str();
 }
-std::string RandomPatAdjmatGen::getGraphVizNodeAttribs(int idx)
+std::string RandomPatAdjmatGen::getGraphVizNodeAttribs(int idx, const string&ref)
 {
+	I(ref=="");
 	stringstream str;
 
 	str<<",";

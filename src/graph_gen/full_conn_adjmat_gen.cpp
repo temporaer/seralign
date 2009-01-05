@@ -30,23 +30,27 @@ bool FullConnAdjmatGen::hasNext()
 FullConnAdjmatGen::~FullConnAdjmatGen()
 {
 }
-std::string FullConnAdjmatGen::getGraphID()
+std::string FullConnAdjmatGen::getGraphID(const string& ref)
 {
+	I(ref == "");
 	stringstream str;
 	str<<"fullconngraph_"<<mSize<<"_"<<mRunningID;
 	return str.str();
 }
-std::string FullConnAdjmatGen::getGraphVizNodeAttribs(int idx)
+std::string FullConnAdjmatGen::getGraphVizNodeAttribs(int idx, const string& ref)
 {
+	I(ref == "");
 	return string("");
 }
-std::string FullConnAdjmatGen::getPlainDescription(int ser_idx, const Serialization& ser)
+std::string FullConnAdjmatGen::getPlainDescription(int ser_idx, const Serialization& ser, const string& ref)
 {
+	I(ref == "");
 	stringstream str;
 	return str.str();
 }
-int FullConnAdjmatGen::getClassID()
+int FullConnAdjmatGen::getClassID(const string& ref)
 {
+	I(ref == "");
 	return (mRunningID - (mRunningID % 30))/30;
 }
 
@@ -89,8 +93,8 @@ ProbAdjPerm FullConnAdjmatGen::operator()()
 
 	//pap = jumb();
 
-	for(int i=0;i<adj->size1();i++)
-		for(int j=0;j<adj->size2();j++)
+	for(unsigned int i=0;i<adj->size1();i++)
+		for(unsigned int j=0;j<adj->size2();j++)
 		{
 			if(fabs((*adj)(i,j)) > 10)
 				cout << "arrgh!"<<endl;
