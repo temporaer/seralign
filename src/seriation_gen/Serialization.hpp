@@ -19,21 +19,24 @@ class Serialization
 	  RankT   mRanks;
 	  PosT    mPositions;
 	  PosVecT mPosVecs;
+	  bool    mHasPosVecs;
   public:
 
-	  Serialization(int n):mRanks(n),mPositions(n),mPosVecs(n){}
-	  Serialization(const RankT&r, const PosT&p):mRanks(r),mPositions(p){}
-	  Serialization(const RankT&r):mRanks(r),mPositions(r.size()){}
+	  Serialization(int n):mRanks(n),mPositions(n),mPosVecs(n),mHasPosVecs(false){}
+	  Serialization(const RankT&r, const PosT&p):mRanks(r),mPositions(p),mPosVecs(r.size()),mHasPosVecs(false){}
+	  Serialization(const RankT&r):mRanks(r),mPositions(r.size()),mPosVecs(r.size()),mHasPosVecs(false){}
 
 	  inline void setRanks    (const RankT& r){ mRanks = r; }
 	  inline void setPositions(const PosT& p) { mPositions = p; }
 	  
 	  template<class T> 
-	  void setPosition(int i, const boost::numeric::ublas::vector_expression<T>& v){
+	  inline void setPosition(int i, const boost::numeric::ublas::vector_expression<T>& v){
+		  mHasPosVecs = true;
 		  mPosVecs[i] = v;
 	  }
 
 	  inline const RankT&   getRanks    ()const{ return mRanks; }
+	  inline       RankT&   getRanks    (){ return mRanks; }
 	  inline const PosT&    getPositions()const{ return mPositions; }
 	  inline const PosVecT& getPosVecs  ()const{ return mPosVecs;   }
 
