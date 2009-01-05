@@ -2,6 +2,7 @@
 #define __POSTPROC_HPP__
 #include <Serialization.hpp>
 #include <vector>
+#include <DBPoint.hpp>
 class AdjMatGen;
 class ProbAdjPerm;
 
@@ -14,6 +15,7 @@ class ProbAdjPerm;
 class PostProc
 {
   public:
+	typedef std::vector<DBPoint<double,3> > DBCloud;
 
     /**
      * Default constructor
@@ -27,7 +29,7 @@ class PostProc
 
 	virtual void atStart();
 	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob);
-	virtual void atSeriation(AdjMatGen& gen, std::vector<boost::numeric::ublas::vector<double> >& cloud, ProbAdjPerm& prob);
+	virtual void atSeriation(AdjMatGen& gen, const DBCloud&, ProbAdjPerm& prob);
 	virtual void atEnd();
 
   private:

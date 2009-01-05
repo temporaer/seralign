@@ -3,13 +3,16 @@
 #include <ProbData.hpp>
 #include <icp.hpp>
 #include <boost/tuple/tuple.hpp>
+#include "DBPoint.hpp"
 
 #define DIM 3
 class GraphFromAdj;
 class GDistProjectedDB{
 	public: // types
-		typedef boost::numeric::ublas::vector<double> point_type;
-		typedef util::ICP<DIM,point_type>             TICP;
+		//typedef boost::numeric::ublas::vector<double> point_type;
+		typedef double TPrecision;
+		typedef DBPoint<TPrecision,DIM>               point_type;
+		typedef util::ICP<DIM,point_type,TPrecision>  TICP;
 		typedef TICP                                  value_type;
 		typedef std::vector<TICP>                     TICPVec;
 		typedef TICPVec::iterator                     iterator;

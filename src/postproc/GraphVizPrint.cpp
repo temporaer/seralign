@@ -32,12 +32,13 @@ void GraphVizPrint::atEnd()
 {
 }
 
-void GraphVizPrint::atSeriation(AdjMatGen& gen, vector<ublas::vector<double> >& cloud, ProbAdjPerm& prob){
+void GraphVizPrint::atSeriation(AdjMatGen& gen, const DBCloud&cloud, ProbAdjPerm& prob){
 	unsigned int n=prob.getAdjMat()->size1();
 	Serialization::RankT ranks(n,0);
-	Serialization  ser(ranks);
-	for(unsigned int i=0;i<n;i++)
+	for(unsigned int i=0;i<n;i++){
 		ranks[i] = prob.getOriginalIndex(i);
+	}
+	Serialization  ser(ranks);
 
 	fs::path dir(gCfg().getString("output-dir").c_str());
 	fs::path base_fn(gen.getGraphID() + ".dot");
@@ -48,7 +49,8 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, vector<ublas::vector<double> >& 
 	for(unsigned int i=0; i<n; i++)
 	{
 		mOS	<< "  n" << i << "[" // use ID in adj-matrix
-			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, ser)<<"\""<<",pos=\""<<(int)(1000*cloud[i][0])<<","<<(int)(1000*cloud[i][1])<<"\""
+			<<"label=\"("<<i<<") "<<gen.getPlainDescription(i, ser)<<"\""
+			<<",pos=\""<<(int)(1000*cloud[i].pos[0])<<","<<(int)(1000*cloud[i].pos[1])<<"\""
 			<<gen.getGraphVizNodeAttribs(ranks[i])<<"];"<<endl;
 	}
 	AdjMat::AdjMatT& A = *prob.getAdjMat();
@@ -56,7 +58,7 @@ void GraphVizPrint::atSeriation(AdjMatGen& gen, vector<ublas::vector<double> >& 
 		for(unsigned int j=i;j<n;j++)
 		{
 			if(A(i,j)>0.0001){
-				mOS << "  n"<<i<<" -- n"<<j<<" [weight="<<A(i,j)<<"];"<<endl;
+				mOS << "  n"<<i<<" -- n"<<j<<" ;"<<endl;
 			}
 		}
 	seqfoot();

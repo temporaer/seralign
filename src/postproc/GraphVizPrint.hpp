@@ -27,7 +27,7 @@ class GraphVizPrint : public PostProc
 
 	virtual void atStart();
 	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob);
-	virtual void atSeriation(AdjMatGen& gen, std::vector<boost::numeric::ublas::vector<double> >& cloud, ProbAdjPerm& prob);
+	virtual void atSeriation(AdjMatGen& gen, const DBCloud& cloud, ProbAdjPerm& prob);
 	virtual void atEnd();
 
 

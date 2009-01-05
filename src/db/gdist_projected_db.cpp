@@ -42,7 +42,7 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	g.setB(0,bestPair.get<2>());
 
 	// convert graph to point-cloud:
-	TCloud cloud(n, point_type(3,0));
+	TCloud cloud(n, point_type());
 
 	// create graph, calculate distances starting at 1st node
 	Serialization::PosT  pos(n), pos2(n);
@@ -98,8 +98,8 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 #endif
 		ranks2(i) = i;
 	}
-	double div2 = *max_element(pos2.begin(),pos2.end());
-	pos2 /= div2; // copy! otherwise max changed while dividing.
+	//double div2 = *max_element(pos2.begin(),pos2.end());
+	pos2 /= div; // copy! otherwise max changed while dividing.
 	
 	// try to find "canonical" direction: 
 	float center2 =(pos2[0]+pos2[n-1])/pos2.size();
@@ -115,14 +115,15 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	// create point cloud
 	for(int i=0;i<n;i++){
 		int idx1 = ranks[i];
-		cloud[idx1][0] = pos[i];
+		cloud[idx1].pos[0] = pos[i];
+		cloud[idx1].id     = idx1;   // setting id once should be sufficient
 		int idx2 = ranks2[i];
-		cloud[idx2][1] = pos2[i];
+		cloud[idx2].pos[1] = pos2[i];
 	}
 
 	TICP icp(mICPMaxIters,mICPLambda);
 	mDB.push_back(icp);
-	mDB.back().registerModel(cloud.begin(), cloud.end());
+	mDB.back().registerModel(cloud.begin(), cloud.end(), point_type::Translator());
 	mIDs.push_back(pap_name);
 	return cloud;
 }
