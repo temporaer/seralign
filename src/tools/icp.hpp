@@ -23,19 +23,19 @@
 
 namespace util{
 
-#define ICP_TMPL    template<int PtDim, class T, class AccessorT>
-#define ICP_FQCLASS ICP<PtDim,T,AccessorT>
+#define ICP_TMPL    template<int PtDim, class T, class _Prec, class AccessorT>
+#define ICP_FQCLASS ICP<PtDim,T,_Prec,AccessorT>
 
 
-template<int PtDim, class T, class AccessorT = KDTree::_Bracket_accessor<T> >
+template<int PtDim, class T, class _Prec=float, class AccessorT = KDTree::_Bracket_accessor<T> >
 class ICP
 {
 	public:
-		typedef float                                               TPrecision;
+		typedef _Prec                                               TPrecision;
 		typedef T                                                   TPoint;
 		typedef KDTree::KDTree<PtDim,TPoint, AccessorT>             TTree;
-		typedef boost::numeric::ublas::vector<TPrecision>           TVec; 
-		typedef boost::numeric::ublas::matrix<TPrecision, boost::numeric::ublas::column_major>           TMat; 
+		typedef boost::numeric::ublas::vector<TPrecision, boost::numeric::ublas::bounded_array<TPrecision,PtDim> > TVec; 
+		typedef boost::numeric::ublas::matrix<TPrecision, boost::numeric::ublas::column_major>                     TMat; 
 		typedef boost::math::quaternion<TPrecision>                 TQuat; 
 	public:
 		/// Moves a TPoint by adding a TVec to it
@@ -104,13 +104,15 @@ class ICP
 		/// Assumes that the TPoints can be moved by adding a TVec to them.
 		/// Assumes that the TPoints can be rotated by multiplication with a rotation matrix.
 		template<class Iter>
-		void match(Iter begin, Iter end);
+		std::vector< boost::tuple<TPrecision, Iter,typename TTree::iterator> >
+		match(Iter begin, Iter end);
 
 		/// Match something to the model.
 		/// Assumes that the TPoints can be moved using supplied Translator.
 		/// Assumes that the TPoints can be rotated using supplied Rotator.
 		template<class Iter, class Translator, class Rotator>
-		void match(Iter begin, Iter end, Translator t, Rotator r);
+		std::vector< boost::tuple<TPrecision, Iter,typename TTree::iterator> >
+		match(Iter begin, Iter end, Translator t, Rotator r);
 
 		/// Returns the determined translation.
 		inline TVec  getTrans(){return mDeterminedTranslation;}
@@ -308,12 +310,14 @@ ICP_FQCLASS::getQuat(Iter begin, Iter end){
  */
 ICP_TMPL
 template<class Iter>
-void ICP_FQCLASS::match(Iter begin, Iter end){
+std::vector< boost::tuple<typename ICP_FQCLASS::TPrecision, Iter,typename ICP_FQCLASS::TTree::iterator> >
+ICP_FQCLASS::match(Iter begin, Iter end){
 	match(begin, end, VectorTranslator(), VectorRotator());
 }
 ICP_TMPL
 template<class Iter, class Translator, class Rotator>
-void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rotate){
+std::vector< boost::tuple<typename ICP_FQCLASS::TPrecision, Iter,typename ICP_FQCLASS::TTree::iterator> >
+ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rotate){
 	int nIter = mMaxIters;
 	mDeterminedRotation    = TQuat(1,0,0,0);
 	typedef boost::tuple<TPrecision, Iter,typename TTree::iterator>  TMatch; 
@@ -380,6 +384,7 @@ void ICP_FQCLASS::match(Iter begin, Iter end, Translator translate, Rotator rota
 	}
 	mDeterminedTranslation += -rotateVector(queryCentroid,mDeterminedRotation) +mModelCentroid;
 	mMatchItersPerformed = mMaxIters - nIter;
+	return matchlist;
 }
 #undef ICP_TMPL    
 #undef ICP_FQCLASS 
