@@ -12,6 +12,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/seriation_gen
 	${CMAKE_SOURCE_DIR}/prob_dt
 	${CMAKE_SOURCE_DIR}/tools
+	${CMAKE_SOURCE_DIR}/db
 	${CMAKE_SOURCE_DIR}/third_party/seqan
 	)
 
