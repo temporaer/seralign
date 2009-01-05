@@ -5,6 +5,9 @@
 #include <cstring>
 
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+namespace bl = boost::lambda;
 
 #include <configuration.hpp>
 #include <adjmat_gen.hpp>
@@ -42,9 +45,8 @@ void BuildDB::operator()()
 
 	int max_num = gCfg().getInt("serialize.max_num");
 
-	bool wantDegreeSorting = gCfg().getBool("serialize.want_degree_sorting");
 
-	out_ptr->atStart();
+	//out_ptr->atStart();
 	int  cnt=0;
 	bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
@@ -57,26 +59,73 @@ void BuildDB::operator()()
 		ProbAdjLapPerm prob ( tmp );
 		if(!adjmat_gen->hasNext())
 			break;
-		if(wantDegreeSorting){
-			DegreeSort ds;
-			ds.sort(prob);
-		}else{
-			shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
-			*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
-			prob.setPermMat(P_ptr);
-		}
+		// WARNING: Permutation is dangerous, since modules later 
+		// on do not have access to the permutation matrix!
+		shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
+		*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
+		prob.setPermMat(P_ptr);
 		prob.calculateLaplacian();
 
 		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
 		GDistProjectedDB::TCloud cloud = mDB.add(adjmat_gen->getGraphID(), prob);
-		out_ptr->atSeriation(*adjmat_gen, cloud, prob);
+		//out_ptr->atSeriation(*adjmat_gen, cloud, prob);
 
 		cnt++;
 		if(cnt == max_num)
 			break;
 	}
 	if(nonverbose) { pb.finish(); }
-	out_ptr->atEnd();
+	//out_ptr->atEnd();
+
+	//printDistMatrix(cnt);
+	int qid = gCfg().getInt("BuildDB.query_id");
+	printClosest(cnt, qid, *adjmat_gen, *out_ptr);
+}
+
+void BuildDB::printClosest(int cnt, int id, AdjMatGen& gen, PostProc& out){
+	//bool verbose    = gCfg().getBool("verbose");
+	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
+
+	ProgressBar matching(cnt, "Matching");
+	ofstream os(gCfg().getOutputFile("output").c_str());
+	std::vector<double> dists(cnt);
+
+	vector<GDistProjectedDB::point_type> query;
+	copy(mDB[id].begin(),mDB[id].end(),back_inserter(query));
+
+
+	for(int i=0; i<cnt; i++){
+		if(nonverbose){matching.inc();}
+		mDB[i].match(query.begin(),query.end(),
+				GDistProjectedDB::point_type::Translator(),
+				GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
+		dists[i] = mDB[i].getMatchingError();
+	}
+	if(nonverbose){matching.finish();}
+
+	vector<unsigned int> granks(cnt);
+	for(int i=0; i<cnt; i++) granks[i]=i;
+	sort(granks.begin(), granks.end(), bl::var(dists)[bl::_1] < bl::var(dists)[bl::_2]);
+
+	out.atStart();
+	for(int i=0;i<5;i++){
+		int idx = granks[i];
+		GDistProjectedDB::TICP& icp = mDB[idx];
+		int n=icp.size();
+		Serialization ser(n);
+		int nodecount=0;
+		for(GDistProjectedDB::TICP::iterator it=icp.begin(); it!=icp.end(); it++, nodecount++){
+			ser.getRanks()[nodecount]   = it->id;
+			ser.setPosition(it->id, it->pos);
+		}
+		cout << "Match i="<<i<<mDB.getIDs()[idx]<<endl;
+		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
+	}
+	out.atEnd();
+}
+void BuildDB::printDistMatrix(int cnt){
+	//bool verbose    = gCfg().getBool("verbose");
+	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
 
 	ProgressBar matching(cnt, "Matching");
 	ofstream os(gCfg().getOutputFile("output").c_str());
@@ -110,7 +159,6 @@ void BuildDB::operator()()
 		os << endl;
 	}
 }
-
 BuildDB::~BuildDB()
 {
 }
