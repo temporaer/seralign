@@ -34,6 +34,7 @@ class ICP
 		typedef _Prec                                               TPrecision;
 		typedef T                                                   TPoint;
 		typedef KDTree::KDTree<PtDim,TPoint, AccessorT>             TTree;
+		typedef typename TTree::iterator                                     iterator;
 		typedef boost::numeric::ublas::vector<TPrecision, boost::numeric::ublas::bounded_array<TPrecision,PtDim> > TVec; 
 		typedef boost::numeric::ublas::matrix<TPrecision, boost::numeric::ublas::column_major>                     TMat; 
 		typedef boost::math::quaternion<TPrecision>                 TQuat; 
@@ -115,13 +116,15 @@ class ICP
 		match(Iter begin, Iter end, Translator t, Rotator r);
 
 		/// Returns the determined translation.
-		inline TVec  getTrans(){return mDeterminedTranslation;}
+		inline TVec  getTrans()const{return mDeterminedTranslation;}
 
 		/// Returns the determined rotation as a quaternion.
-		inline TQuat getRot(){return mDeterminedRotation;}
+		inline TQuat getRot()const{return mDeterminedRotation;}
 
 		/// Returns the error after matching
-		inline TPrecision getMatchingError(){return mFinalError;}
+		inline TPrecision getMatchingError()const{return mFinalError;}
+
+		inline unsigned int size() const {return mModelTree.size();}
 
 		/// Returns the number of iterations needed for matching
 		inline unsigned int getMatchItersPerformed(){return mMatchItersPerformed;}
@@ -297,11 +300,11 @@ ICP_FQCLASS::getQuat(Iter begin, Iter end){
 	N(1,3) = Szx+Sxz;
 	N(2,3) = Syz+Szy;
 
-	TVec lambda(4);
+	boost::numeric::ublas::vector<TPrecision> lambda(4);
 	boost::numeric::bindings::lapack::syev( 'V', 'L', N, lambda, boost::numeric::bindings::lapack::minimal_workspace() );
-	typename TVec::iterator best_lambda     = max_element(lambda.begin(),lambda.end());   
+	typename boost::numeric::ublas::vector<TPrecision>::iterator best_lambda     = max_element(lambda.begin(),lambda.end());   
 	int best_lambda_idx = std::distance(lambda.begin(),best_lambda);  
-	TVec leading = boost::numeric::ublas::column(N,best_lambda_idx);
+	boost::numeric::ublas::vector<TPrecision> leading = boost::numeric::ublas::column(N,best_lambda_idx);
 	return TQuat(leading[0], leading[1], leading[2], leading[3]);
 }
 
