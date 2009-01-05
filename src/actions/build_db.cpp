@@ -15,7 +15,6 @@
 #include <DegreeSort.hpp>
 #include <GraphFromAdj.hpp>
 
-#include <gdist_projected_db.hpp>
 #include "build_db.hpp"
 
 #include <postproc.hpp>
@@ -28,8 +27,7 @@ using namespace boost;
 
 void BuildDB::operator()()
 {
-	GDistProjectedDB db;
-	db.configure();
+	mDB.configure();
 
 	string adjmat_gen_name               = gCfg().getString("serialize.adjmat_gen");
 	auto_ptr<AdjMatGen> adjmat_gen       = genericFactory<AdjMatGen>::instance().create(adjmat_gen_name);
@@ -51,7 +49,7 @@ void BuildDB::operator()()
 	bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
 	
-	ProgressBar pb(max_num==0?100:max_num, "serializing");
+	ProgressBar pb(max_num==0?200:max_num, "serializing");
 	while(true){
 		if(nonverbose) { pb.inc();                                          }
 		if(verbose)    { L("Action::BuildDB %03d: Generating...\n", cnt); }
@@ -70,7 +68,7 @@ void BuildDB::operator()()
 		prob.calculateLaplacian();
 
 		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
-		GDistProjectedDB::TCloud cloud = db.add(adjmat_gen->getGraphID(), prob);
+		GDistProjectedDB::TCloud cloud = mDB.add(adjmat_gen->getGraphID(), prob);
 		out_ptr->atSeriation(*adjmat_gen, cloud, prob);
 
 		cnt++;
@@ -83,22 +81,34 @@ void BuildDB::operator()()
 	ProgressBar matching(cnt, "Matching");
 	ofstream os(gCfg().getOutputFile("output").c_str());
 	// output distances as CSV
-	for(vector<string>::const_iterator it=db.getIDs().begin(); it!=db.getIDs().end(); it++){
+	for(vector<string>::const_iterator it=mDB.getIDs().begin(); it!=mDB.getIDs().end(); it++){
 		os <<","<<(*it);
 	}
 	os<<endl;
-	for(GDistProjectedDB::iterator it=db.begin(); it!=db.end(); it++){
+	numeric::ublas::matrix<double> dmat(cnt,cnt);
+	int dmat_i=0, dmat_j=0;
+	for(GDistProjectedDB::iterator it=mDB.begin(); it!=mDB.end(); it++){
 		if(nonverbose){matching.inc();}
 		vector<GDistProjectedDB::point_type> query;
 		copy(it->begin(),it->end(),back_inserter(query));
 		os << "dummy";
-		for(GDistProjectedDB::iterator it2=db.begin(); it2!=db.end(); it2++){
-			it2->match(query.begin(),query.end());
-			os << "," <<it2->getMatchingError();
+		for(GDistProjectedDB::iterator it2=mDB.begin(); it2!=mDB.end(); it2++){
+			it2->match(query.begin(),query.end(),
+					GDistProjectedDB::point_type::Translator(),
+					GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
+			dmat(dmat_i,dmat_j) = it2->getMatchingError(); 
+			dmat_i++;
+		}
+		dmat_j++; dmat_i=0;
+	}
+	if(nonverbose){matching.finish();}
+	for(int i=0;i<cnt;i++){
+		os << "dummy";
+		for(int j=0;j<cnt;j++){
+			os << "," <<min(dmat(i,j),dmat(j,i));
 		}
 		os << endl;
 	}
-	if(nonverbose){matching.finish();}
 }
 
 BuildDB::~BuildDB()
