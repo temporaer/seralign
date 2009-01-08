@@ -129,6 +129,9 @@ class ICP
 		/// Returns the number of iterations needed for matching
 		inline unsigned int getMatchItersPerformed(){return mMatchItersPerformed;}
 
+		/// Returns Centroid of model
+		inline TVec getModelCentroid()const{return mModelCentroid;}
+
 		/// set verbosity
 		inline void setVerbose(bool b){mVerbose=b;}
 
