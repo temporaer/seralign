@@ -11,7 +11,7 @@ for (f in files){
 
 	m <- as.matrix(simmat[nam])
 	m<-matrix(as.numeric(m), ncol=length(nam))
-	m<-exp(-m)
+#	m<-exp(-m)
 	m[is.na(m)] <- 0
 	w <- metaMDS(m,zerodist="add")
 	png(paste(csvfile, "png", sep="."))
