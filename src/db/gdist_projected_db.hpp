@@ -20,9 +20,12 @@ class GDistProjectedDB{
 	public:
 		inline iterator begin(){return mDB.begin();}
 		inline iterator end()  {return mDB.end();}
+		inline const TICP& back()const{ return mDB.back();}
+		inline       TICP& back()     { return mDB.back();}
 		inline const TICP& operator[](unsigned int i)const{ return mDB[i];}
 		inline       TICP& operator[](unsigned int i){ return mDB[i];}
 		TCloud add(const std::string& id, const ProbAdjPerm& pap);
+		TCloud addSpectral(const std::string& id, const ProbAdjPerm& pap);
 		void configure();
 		inline const std::vector<std::string>& getIDs(){return mIDs;}
 	private:

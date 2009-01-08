@@ -1,14 +1,17 @@
 #include <memory>
 #include <configuration.hpp>
 #include <GraphFromAdj.hpp> 
+#include <boost/numeric/bindings/lapack/lapack.hpp>
 #include "gdist_projected_db.hpp"
 #include <gdist_seriation_gen.hpp>
 #include <factory/factory.h>
 #include <stats.hpp>
+#include <nana.h>
 
 using namespace std;
 using namespace boost;
 using namespace boost::numeric;
+namespace lapack = boost::numeric::bindings::lapack;
 
 struct GDistProjectedDB_PositionSorter{
 	GDistProjectedDB_PositionSorter(const Serialization::PosT& p)
@@ -22,6 +25,40 @@ struct GDistProjectedDB_PositionSorter{
 };
 
 GDistProjectedDB::TCloud
+GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
+{
+	ProbAdjLapPerm pap2(pap);
+	pap2.calculateLaplacian();
+	Laplacian::LaplacianT& L = *pap2.getLaplacian(); 
+	int n = L.size1();
+	Serialization ret(n);
+
+	ublas::matrix<double,ublas::column_major> Eigv(L);
+	ublas::vector<double> lambda(n);
+	ublas::vector<double>::iterator best_lambda;
+
+	lapack::syev( 'V', 'L', Eigv, lambda, lapack::minimal_workspace() );
+	ublas::vector<double> v1 = ublas::column(Eigv,1);
+	ublas::vector<double> v2 = ublas::column(Eigv,2);
+	ublas::vector<double> v3 = ublas::column(Eigv,3);
+
+	TCloud cloud(n, point_type());
+	// create point cloud
+	for(int i=0;i<n;i++){
+		cloud[i].id     = i;
+		cloud[i].pos[0] = v1[i];
+		cloud[i].pos[1] = v2[i];
+		//cloud[i].pos[2] = v3[i];
+		cloud[i].pos[2] = 0;
+	}
+
+	TICP icp(mICPMaxIters,mICPLambda);
+	mDB.push_back(icp);
+	mDB.back().registerModel(cloud.begin(), cloud.end(), point_type::Translator());
+	mIDs.push_back(pap_name);
+	return cloud;
+}
+GDistProjectedDB::TCloud
 GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 {
 	// serialize once using
@@ -29,6 +66,7 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	//if(!seriation_gen.get())
 		//throw logic_error(string("Supplied SerGenAdj `") + mSeriationGenName + "' does not exist");
 	//seriation_gen->configure();
+	bool doNormalize = false;
 
 	GraphFromAdj g(pap);
 	int n = pap.getAdjMat()->size1();
@@ -62,7 +100,8 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	// order the positions ascendingly (-->matching the order of the ranks)
 	sort(pos.begin(),pos.end());
 	double div = *max_element(pos.begin(),pos.end());
-	pos /= div; // copy, otherwise max changed in between
+	if(doNormalize)
+		pos /= div; // copy, otherwise max changed in between
 
 
 	// try to find "canonical" direction: 
@@ -99,7 +138,8 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 		ranks2(i) = i;
 	}
 	//double div2 = *max_element(pos2.begin(),pos2.end());
-	pos2 /= div; // copy! otherwise max changed while dividing.
+	if(doNormalize)
+		pos2 /= div; // copy! otherwise max changed while dividing.
 	
 	// try to find "canonical" direction: 
 	float center2 =(pos2[0]+pos2[n-1])/pos2.size();
