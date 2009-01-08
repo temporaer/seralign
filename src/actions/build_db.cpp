@@ -9,6 +9,11 @@
 #include <boost/lambda/bind.hpp>
 namespace bl = boost::lambda;
 
+#include <boost/filesystem/path.hpp>
+namespace fs = boost::filesystem;
+
+#include <boost/lambda/casts.hpp>
+
 #include <configuration.hpp>
 #include <adjmat_gen.hpp>
 
@@ -21,6 +26,7 @@ namespace bl = boost::lambda;
 #include "build_db.hpp"
 
 #include <postproc.hpp>
+#include <stats.hpp>
 
 #include <nana.h>
 
@@ -45,11 +51,14 @@ void BuildDB::operator()()
 
 	int max_num = gCfg().getInt("serialize.max_num");
 
-
 	//out_ptr->atStart();
 	int  cnt=0;
 	bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
+	
+	string ofile("centroids.dat");
+	string opath =  gCfg().getString("output-dir");
+	ofstream ofp( (fs::path(opath) / fs::path(ofile)).string().c_str());
 	
 	ProgressBar pb(max_num==0?200:max_num, "serializing");
 	while(true){
@@ -67,7 +76,12 @@ void BuildDB::operator()()
 		prob.calculateLaplacian();
 
 		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
-		GDistProjectedDB::TCloud cloud = mDB.add(adjmat_gen->getGraphID(), prob);
+		GDistProjectedDB::TCloud cloud        = mDB.addSpectral(adjmat_gen->getGraphID(), prob);
+		//GDistProjectedDB::TCloud cloud        = mDB.add(adjmat_gen->getGraphID(), prob);
+		GDistProjectedDB::TICP::TVec centroid = mDB.back().getModelCentroid();
+		ofp << centroid[0] <<"\t"<<centroid[1]<<"\t"<<centroid[2]<<"\t"<<adjmat_gen->getClassID()<<endl;
+		
+
 		//out_ptr->atSeriation(*adjmat_gen, cloud, prob);
 
 		cnt++;
@@ -77,39 +91,43 @@ void BuildDB::operator()()
 	if(nonverbose) { pb.finish(); }
 	//out_ptr->atEnd();
 
-	//printDistMatrix(cnt);
+#if 0
+	printDistMatrix(cnt);
+#else
 	int qid = gCfg().getInt("BuildDB.query_id");
-	printClosest(cnt, qid, *adjmat_gen, *out_ptr);
+	ExactDescriptiveStatistics stats("accuracy");
+	for(int i=0;i<cnt;i++){
+		int klass = knn_classify(cnt, i, *adjmat_gen, *out_ptr, 3);
+		stats.notify(klass == adjmat_gen->getClassID(mDB.getIDs()[i]) ? 1 : 0);
+	}
+	cout <<stats<<endl;
+#endif
 }
 
-void BuildDB::printClosest(int cnt, int id, AdjMatGen& gen, PostProc& out){
+int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k){
 	//bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
 
 	ProgressBar matching(cnt, "Matching");
 	ofstream os(gCfg().getOutputFile("output").c_str());
-	std::vector<double> dists(cnt);
-
-	vector<GDistProjectedDB::point_type> query;
-	copy(mDB[id].begin(),mDB[id].end(),back_inserter(query));
-
+	std::vector<double>  dists(cnt); // icp distances
+	std::vector<double> cdists(cnt); // centroid distances
 
 	for(int i=0; i<cnt; i++){
 		if(nonverbose){matching.inc();}
-		mDB[i].match(query.begin(),query.end(),
-				GDistProjectedDB::point_type::Translator(),
-				GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
-		dists[i] = mDB[i].getMatchingError();
+		cdists[i] = norm_2(mDB[i].getModelCentroid() - mDB[id].getModelCentroid());
+		dists[i]  = match(mDB[i],mDB[id]);
 	}
 	if(nonverbose){matching.finish();}
 
-	vector<unsigned int> granks(cnt);
+	vector<unsigned int> granks(cnt), cranks(cnt);
 	for(int i=0; i<cnt; i++) granks[i]=i;
-	sort(granks.begin(), granks.end(), bl::var(dists)[bl::_1] < bl::var(dists)[bl::_2]);
-
-	out.atStart();
-	for(int i=0;i<5;i++){
-		int idx = granks[i];
+	for(int i=0; i<cnt; i++) cranks[i]=i;
+	sort(granks.begin(), granks.end(), bl::var( dists)[bl::_1] < bl::var( dists)[bl::_2]);
+	sort(cranks.begin(), cranks.end(), bl::var(cdists)[bl::_1] < bl::var(cdists)[bl::_2]);
+	cout << "Cranks: "<<endl;
+	for(int i=0;i<k+1;i++){
+		int idx = cranks[i];
 		GDistProjectedDB::TICP& icp = mDB[idx];
 		int n=icp.size();
 		Serialization ser(n);
@@ -118,10 +136,44 @@ void BuildDB::printClosest(int cnt, int id, AdjMatGen& gen, PostProc& out){
 			ser.getRanks()[nodecount]   = it->id;
 			ser.setPosition(it->id, it->pos);
 		}
-		cout << "Match i="<<i<<mDB.getIDs()[idx]<<endl;
+		cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
 		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
 	}
+
+	cout << "ICPranks: "<<endl;
+	out.atStart();
+	map<int,double> classcnt;
+	typedef map<int,double>::iterator CCIt;
+	typedef pair<int,double> CCItP;
+	for(int i=0;i<k+1;i++){
+		int idx = granks[i];
+		double dist = dists[idx];
+		GDistProjectedDB::TICP& icp = mDB[idx];
+		int n=icp.size();
+		Serialization ser(n);
+		int nodecount=0;
+		for(GDistProjectedDB::TICP::iterator it=icp.begin(); it!=icp.end(); it++, nodecount++){
+			ser.getRanks()[nodecount]   = it->id;
+			ser.setPosition(it->id, it->pos);
+		}
+		cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
+		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
+		if(i>0) // TODO: need more elegant sol'n. ignore pattern itself!
+		{
+			int klass = gen.getClassID(mDB.getIDs()[idx]);
+			if(classcnt.find(klass) == classcnt.end())
+				classcnt[klass]  = 1.0/dist;
+			else
+				classcnt[klass] += 1.0/dist;
+		}
+	}
 	out.atEnd();
+
+	// return the class which was voted for most
+	return max_element(classcnt.begin(), classcnt.end(), 
+			bl::bind<const int&>(&CCItP::second, bl::_1) < 
+			bl::bind<const int&>(&CCItP::second, bl::_2))
+			->first;
 }
 void BuildDB::printDistMatrix(int cnt){
 	//bool verbose    = gCfg().getBool("verbose");
@@ -142,10 +194,12 @@ void BuildDB::printDistMatrix(int cnt){
 		copy(it->begin(),it->end(),back_inserter(query));
 		os << "dummy";
 		for(GDistProjectedDB::iterator it2=mDB.begin(); it2!=mDB.end(); it2++){
-			it2->match(query.begin(),query.end(),
-					GDistProjectedDB::point_type::Translator(),
-					GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
-			dmat(dmat_i,dmat_j) = it2->getMatchingError(); 
+			if(dmat_i < dmat_j){
+				dmat_i++;
+				continue;
+			}
+			double dist = match(*it, *it2);
+			dmat(dmat_i,dmat_j) = dmat(dmat_j,dmat_i) = dist;
 			dmat_i++;
 		}
 		dmat_j++; dmat_i=0;
@@ -159,8 +213,23 @@ void BuildDB::printDistMatrix(int cnt){
 		os << endl;
 	}
 }
+double
+BuildDB::match(GDistProjectedDB::TICP& a,GDistProjectedDB::TICP& b){
+	vector<GDistProjectedDB::point_type> query1, query2;
+	copy(a.begin(),a.end(),back_inserter(query1));
+	copy(b.begin(),b.end(),back_inserter(query2));
+	b.match(query1.begin(),query1.end(),
+			GDistProjectedDB::point_type::Translator(),
+			GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
+	a.match(query2.begin(),query2.end(),
+			GDistProjectedDB::point_type::Translator(),
+			GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
+	return a.getMatchingError() + b.getMatchingError();
+}
+
 BuildDB::~BuildDB()
 {
 }
+
 
 namespace{ registerInFactory<Action, BuildDB> registerBase("BuildDB"); }

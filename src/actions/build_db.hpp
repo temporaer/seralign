@@ -13,7 +13,8 @@ class BuildDB:public Action{
 	private:
 		GDistProjectedDB mDB;
 		void printDistMatrix(int cnt);
-		void printClosest(int cnt, int id, AdjMatGen&, PostProc&);
+		int knn_classify(int cnt, int id, AdjMatGen&, PostProc&, int k);
+		double match(GDistProjectedDB::TICP&,GDistProjectedDB::TICP&);
 };
 
 #endif /* __BUILD_DB_HPP__ */
