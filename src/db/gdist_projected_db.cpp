@@ -24,6 +24,22 @@ struct GDistProjectedDB_PositionSorter{
 	const Serialization::PosT&  mPos;
 };
 
+template<class T, class U>
+bool normalize_direction(ublas::vector<T>& v, ublas::vector<U>& w, int n){
+	float center =(v[0]+v[n-1])/(float)n;
+	float lever  = center;
+	for(int i=0;i<n;i++)
+		lever += center-v[i];
+	if(lever < center){
+		reverse(w.begin(),w.end());
+		reverse(v.begin(),v.end());
+		// muss 1-v[i] sein, nich einfach revert!
+		v = ublas::scalar_vector<T>(n,1) - v;
+		return true;
+	}
+	return false;
+}
+
 GDistProjectedDB::TCloud
 GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
 {
@@ -41,6 +57,11 @@ GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
 	ublas::vector<double> v1 = ublas::column(Eigv,1);
 	ublas::vector<double> v2 = ublas::column(Eigv,2);
 	ublas::vector<double> v3 = ublas::column(Eigv,3);
+	//ublas::vector<int> ranks(n);
+	//normalize_direction(v1,ranks,n);
+	//normalize_direction(v2,ranks,n);
+	//normalize_direction(v3,ranks,n);
+	
 
 	TCloud cloud(n, point_type());
 	// create point cloud
@@ -48,7 +69,7 @@ GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
 		cloud[i].id     = i;
 		cloud[i].pos[0] = v1[i];
 		cloud[i].pos[1] = v2[i];
-		//cloud[i].pos[2] = v3[i];
+		cloud[i].pos[2] = v3[i];
 		cloud[i].pos[2] = 0;
 	}
 
@@ -104,18 +125,7 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 		pos /= div; // copy, otherwise max changed in between
 
 
-	// try to find "canonical" direction: 
-	float center =(pos[0]+pos[n-1])/pos.size();
-	float lever  = center;
-	for(int i=0;i<n;i++)
-		lever += center-pos[i];
-	if(lever < center){
-		reverse(ranks.begin(),ranks.end());
-		reverse(pos.begin(),pos.end());
-		// muss 1-pos[i] sein, nich einfach revert!
-		pos = ublas::scalar_vector<double>(n,1) - pos;
-	}
-
+	normalize_direction(pos, ranks, n);
 
 	bestPair = tuple<float, unsigned int, unsigned int>(0,0,1);
 	for(int i=n/2 - mFastmapTries; i<=n/2+mFastmapTries; i++){
@@ -141,16 +151,7 @@ GDistProjectedDB::add(const string& pap_name, const ProbAdjPerm& pap)
 	if(doNormalize)
 		pos2 /= div; // copy! otherwise max changed while dividing.
 	
-	// try to find "canonical" direction: 
-	float center2 =(pos2[0]+pos2[n-1])/pos2.size();
-	float lever2  = center2;
-	for(int i=0;i<n;i++)
-		lever2 += center2-pos2[i];
-	if(lever2 < center2){
-		reverse(ranks2.begin(),ranks2.end());
-		reverse(pos2.begin(),pos2.end());
-		pos = ublas::scalar_vector<double>(n,1) - pos;
-	}
+	normalize_direction(pos2, ranks2, n);
 
 	// create point cloud
 	for(int i=0;i<n;i++){
