@@ -20,12 +20,7 @@ DBCfg::DBCfg(){
 		("GDistProjectedDB.fastmap_tries", value<int>()->default_value(5), "How hard to look for longest dist")
 		("GDistProjectedDB.lambda", value<float>()->default_value(10), "ICP lambda")
 		;
-	options_description bdb("  BuildDB Options");
-	bdb.add_options()
-		("BuildDB.query_id,p", value<int>()->default_value(0), "ID of object to query")
-		;
 	od.add(gdpdb);
-	od.add(bdb);
 	gCfg().addModuleOptions(od);
 }
 
