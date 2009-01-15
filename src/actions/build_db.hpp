@@ -15,6 +15,7 @@ class BuildDB:public Action{
 		void printDistMatrix(int cnt);
 		int knn_classify(int cnt, int id, AdjMatGen&, PostProc&, int k);
 		double match(GDistProjectedDB::TICP&,GDistProjectedDB::TICP&);
+		void spatialAnalysis(int cnt, AdjMatGen&);
 };
 
 #endif /* __BUILD_DB_HPP__ */

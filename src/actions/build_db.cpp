@@ -5,6 +5,8 @@
 #include <cstring>
 
 #include <boost/numeric/ublas/matrix.hpp>
+namespace ublas = boost::numeric::ublas;
+
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 namespace bl = boost::lambda;
@@ -27,6 +29,8 @@ namespace fs = boost::filesystem;
 
 #include <postproc.hpp>
 #include <stats.hpp>
+
+#include <gnuplot_i.hpp>
 
 #include <nana.h>
 
@@ -55,6 +59,8 @@ void BuildDB::operator()()
 	int  cnt=0;
 	bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
+
+	int emb_meth    = gCfg().getInt("BuildDB.embed_meth");
 	
 	string ofile("centroids.dat");
 	string opath =  gCfg().getString("output-dir");
@@ -76,8 +82,13 @@ void BuildDB::operator()()
 		prob.calculateLaplacian();
 
 		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
-		GDistProjectedDB::TCloud cloud        = mDB.addSpectral(adjmat_gen->getGraphID(), prob);
-		//GDistProjectedDB::TCloud cloud        = mDB.add(adjmat_gen->getGraphID(), prob);
+		GDistProjectedDB::TCloud cloud;
+		if(emb_meth==0)
+			cloud        = mDB.addSpectral(adjmat_gen->getGraphID(), prob);
+		else if(emb_meth==1)
+			cloud        = mDB.add(adjmat_gen->getGraphID(), prob);
+		else
+			throw runtime_error("unknown embedding method!");
 		GDistProjectedDB::TICP::TVec centroid = mDB.back().getModelCentroid();
 		ofp << centroid[0] <<"\t"<<centroid[1]<<"\t"<<centroid[2]<<"\t"<<adjmat_gen->getClassID()<<endl;
 		
@@ -90,42 +101,60 @@ void BuildDB::operator()()
 	}
 	if(nonverbose) { pb.finish(); }
 	//out_ptr->atEnd();
+	
+	int evalMode = gCfg().getInt("BuildDB.evalmode");
 
-#if 0
-	printDistMatrix(cnt);
-#else
-	int qid = gCfg().getInt("BuildDB.query_id");
-	ExactDescriptiveStatistics stats("accuracy");
-	for(int i=0;i<cnt;i++){
-		int klass = knn_classify(cnt, i, *adjmat_gen, *out_ptr, 3);
-		stats.notify(klass == adjmat_gen->getClassID(mDB.getIDs()[i]) ? 1 : 0);
-	}
-	cout <<stats<<endl;
-#endif
+
+	if(evalMode ==0)
+		printDistMatrix(cnt);
+	else if(evalMode == 1)
+		spatialAnalysis(cnt, *adjmat_gen);
+	else if(evalMode == 2){
+		int qid = gCfg().getInt("BuildDB.query_id");
+		ExactDescriptiveStatistics stats("accuracy");
+		ProgressBar pbclass(cnt,"KNN Classify");
+		Gnuplot gp("lines");
+		gp.set_yrange(0,1);
+		std::vector<float> statsv;
+		int K = gCfg().getInt("BuildDB.knn_k"); 
+		for(int i=0;i<cnt;i++){
+			pbclass.inc();
+			int klass = knn_classify(cnt, i, *adjmat_gen, *out_ptr, K);
+			stats.notify(klass == adjmat_gen->getClassID(mDB.getIDs()[i]) ? 1 : 0);
+			statsv.push_back(stats.getMean());
+			if(cnt % 20 == 0){
+				gp.reset_plot();
+				gp.plot_x(statsv,"accuracy");
+			}
+		}
+		pbclass.finish();
+		cout <<stats<<endl;
+	}else
+		cout << "Unknown EvalMode"<<endl;
 }
 
 int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k){
 	//bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
 
-	ProgressBar matching(cnt, "Matching");
+	//ProgressBar matching(cnt, "Matching");
 	ofstream os(gCfg().getOutputFile("output").c_str());
 	std::vector<double>  dists(cnt); // icp distances
 	std::vector<double> cdists(cnt); // centroid distances
 
 	for(int i=0; i<cnt; i++){
-		if(nonverbose){matching.inc();}
+		//if(nonverbose){matching.inc();}
 		cdists[i] = norm_2(mDB[i].getModelCentroid() - mDB[id].getModelCentroid());
 		dists[i]  = match(mDB[i],mDB[id]);
 	}
-	if(nonverbose){matching.finish();}
+	//if(nonverbose){matching.finish();}
 
 	vector<unsigned int> granks(cnt), cranks(cnt);
 	for(int i=0; i<cnt; i++) granks[i]=i;
 	for(int i=0; i<cnt; i++) cranks[i]=i;
 	sort(granks.begin(), granks.end(), bl::var( dists)[bl::_1] < bl::var( dists)[bl::_2]);
 	sort(cranks.begin(), cranks.end(), bl::var(cdists)[bl::_1] < bl::var(cdists)[bl::_2]);
-	cout << "Cranks: "<<endl;
+	//cout << "Cranks: "<<endl;
 	for(int i=0;i<k+1;i++){
 		int idx = cranks[i];
 		GDistProjectedDB::TICP& icp = mDB[idx];
@@ -136,11 +165,11 @@ int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k)
 			ser.getRanks()[nodecount]   = it->id;
 			ser.setPosition(it->id, it->pos);
 		}
-		cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
+		//cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
 		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
 	}
 
-	cout << "ICPranks: "<<endl;
+	//cout << "ICPranks: "<<endl;
 	out.atStart();
 	map<int,double> classcnt;
 	typedef map<int,double>::iterator CCIt;
@@ -156,15 +185,23 @@ int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k)
 			ser.getRanks()[nodecount]   = it->id;
 			ser.setPosition(it->id, it->pos);
 		}
-		cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
+		//cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
 		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
 		if(i>0) // TODO: need more elegant sol'n. ignore pattern itself!
 		{
 			int klass = gen.getClassID(mDB.getIDs()[idx]);
+#if 1
+			// weighted knn
 			if(classcnt.find(klass) == classcnt.end())
-				classcnt[klass]  = 1.0/dist;
+				classcnt[klass]  = 1.0/(dist);
 			else
-				classcnt[klass] += 1.0/dist;
+				classcnt[klass] += 1.0/(dist);
+#else
+			if(classcnt.find(klass) == classcnt.end())
+				classcnt[klass]  = 1.0;
+			else
+				classcnt[klass] += 1.0;
+#endif
 		}
 	}
 	out.atEnd();
@@ -229,6 +266,98 @@ BuildDB::match(GDistProjectedDB::TICP& a,GDistProjectedDB::TICP& b){
 
 BuildDB::~BuildDB()
 {
+}
+
+int spatialHash(
+		const ublas::vector<int>& pt,
+		const ublas::vector<int>& res){
+	int n = res.size();
+	int hashval = 0;
+	for(int i=n-1;i>=0;i--)
+	{
+		int prevprod=1;
+		for(int j=i-1;j>=0;j--)
+			prevprod *= res(j);
+		hashval += pt(i) * prevprod;
+	}
+	return hashval;
+}
+int spatialHash(
+		const ublas::vector<double>& minv, 
+		const ublas::vector<double>& maxv,
+		const ublas::vector<int> &   res,
+		const ublas::vector<double> &pt){
+	
+	int n = pt.size();
+	ublas::vector<int> npt(n);
+	for(int i=0;i<n;i++){
+		npt(i) = (int)(res(i) * (pt(i)-minv(i))/(maxv(i)-minv(i)));
+	}
+
+	return spatialHash(npt, res);
+}
+
+void BuildDB::spatialAnalysis(int cnt, AdjMatGen& adjmatgen)
+{  
+	GDistProjectedDB::iterator cit;
+	GDistProjectedDB::TICP::iterator pit;
+	ublas::vector<double> maxv = ublas::scalar_vector<double>(DIM, INT_MIN); 
+	ublas::vector<double> minv = ublas::scalar_vector<double>(DIM, INT_MAX); 
+
+	// determine spatial extent
+	cout << "determining max/min of space..."<<endl;
+	for( cit=mDB.begin(); cit!=mDB.end(); cit++){
+		GDistProjectedDB::TICP & c = *cit;
+		for( pit = c.begin(); pit != c.end(); pit++){
+			const GDistProjectedDB::point_type& p = *pit;
+			for(int i=0;i<DIM;i++){
+				maxv[i] = max(p[i], maxv[i]);
+				minv[i] = min(p[i], minv[i]);
+			}
+		}
+	}
+	maxv += ublas::scalar_vector<double>(DIM, 0.0001); 
+
+	// hash all points
+	const int resi = 25;
+	ublas::vector<int> res = ublas::scalar_vector<int>(DIM, resi);
+	map<int,int> distr;
+	cout << "determining distribution of space..."<<endl;
+	ProgressBar pb(cnt,"distr");
+	cnt=0;
+	for( cit=mDB.begin(); cit!=mDB.end(); cit++){
+		GDistProjectedDB::TICP & c = *cit;
+		pb.inc();
+		int klass = (adjmatgen.getClassID(mDB.getIDs()[cnt++]) == 0) ? -1 : 1;
+
+		for( pit = c.begin(); pit != c.end(); pit++){
+			const GDistProjectedDB::point_type& p = *pit;
+			int h = spatialHash(minv,maxv,res,(GDistProjectedDB::TICP::TVec)p) ;
+			if(distr.find(h) == distr.end())
+				distr[h]  = klass;
+			else
+				distr[h] += klass;
+		}
+	}
+	pb.finish();
+
+	ofstream os ("/tmp/spat.dat");
+	for(int i=0; i<resi; i++){
+		for(int j=0; j<resi; j++){
+			int sum = 0;
+			for(int k=0; k<resi; k++){
+				ublas::vector<int> v(3);
+				v(0) = i; v(1) = j; v(2) = k;
+				int h = spatialHash(v,res);
+				if(distr.find(h) != distr.end())
+					sum += distr[h];
+			}
+
+			os << i << " " << j <<" " << sum<<endl;
+		}
+		os << endl;
+	}
+	
 }
 
 
