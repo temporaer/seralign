@@ -37,12 +37,12 @@ struct Mutagenesis::Impl{
 	string getPrologDescription(int idx,const Serialization&,const string& ref);
 	string getPlainDescription(int idx,const Serialization&,const string& ref);
 
-	double kernelNull(int i, int j);
-	double kernelTypeAndWeightEq(int i, int j);
-	double kernelTypeSum(int i, int j);
-	double kernelNienhuysCheng(int i, int j);
+	double kernelNull(int i, int j, double b);
+	double kernelTypeAndWeightEq(int i, int j, double b);
+	double kernelTypeSum(int i, int j, double b);
+	double kernelNienhuysCheng(int i, int j, double b);
 
-	double (Mutagenesis::Impl:: *mKernel)(int, int);
+	double (Mutagenesis::Impl:: *mKernel)(int, int, double);
 
 	bool mIncludeGraphNeighbours;
 	int  mNumSequenceNeighbours;
@@ -60,14 +60,19 @@ struct Mutagenesis::Impl{
 	Descriptor              mCurDesc;
 };
 
-double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j){
+double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j, double b){
+	if (b==0) return 0;
 	double d = 0.0;
 	int    n = 0;
 	if(mCurDesc.mTypes[i]  == mCurDesc.mTypes[j])  d+=1; n++;
 	if(mCurDesc.mParam1[i] == mCurDesc.mParam1[j]) d+=1; n++;
-	return d/(2*n);
+	double x = pow(
+			boost::lexical_cast<double>(mCurDesc.mParam2[i])-
+			boost::lexical_cast<double>(mCurDesc.mParam2[j]),2.0);
+	return 1.0 - 0.5*d/(2*n);
 }
-double Mutagenesis::Impl::kernelTypeSum(int i, int j){
+double Mutagenesis::Impl::kernelTypeSum(int i, int j, double b){
+	if(b==0) return 0;
 	double d = 0.0;
 	map<string, double> m;
 	m["n"]  = 0.3;
@@ -81,14 +86,15 @@ double Mutagenesis::Impl::kernelTypeSum(int i, int j){
 
 	return d;
 }
-double Mutagenesis::Impl::kernelTypeAndWeightEq(int i, int j){
+double Mutagenesis::Impl::kernelTypeAndWeightEq(int i, int j, double b){
+	if(b==0) return 0;
 	double d = 0.0;
 	if(mCurDesc.mTypes[i] == mCurDesc.mTypes[j]) d+=0.25;
 	if(mCurDesc.mParam1[i] == mCurDesc.mParam1[j]) d+=0.25;
 	return d;
 }
-double Mutagenesis::Impl::kernelNull(int i, int j){
-	return 0.0;
+double Mutagenesis::Impl::kernelNull(int i, int j, double b){
+	return (b>0)?1.0:0.0;
 }
 string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s, const string&ref){
 	Descriptor& d = (ref=="")?mCurDesc : mDescriptors[ref];
@@ -199,7 +205,8 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 		param2.push_back( *it ); it++;
 		for(int i=0;it!=strvec.end();it++,i++){
 			int val = boost::lexical_cast<double>(*it);
-			A(i,cnt-1) = A(cnt-1,i) = (val>0 ? 1:0);
+			//A(i,cnt-1) = A(cnt-1,i) = (val>0 ? 1:0);
+			A(i,cnt-1) = A(cnt-1,i) = val;
 		}
 		cnt++;
 	}
@@ -212,9 +219,7 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 		AdjMat::AdjMatT& A = *mCurDesc.mA_ptr;
 		for(int i=0;i<n;i++)
 			for(int j=i+1;j<n;j++)
-				if(A(i,j)>0.001){
-					A(i,j) = A(j,i) = A(i, j) - 0.5*(this->*mKernel)(i,j);
-				}
+				A(i,j) = A(j,i) = (this->*mKernel)(i,j, A(i,j));
 	}
 
 	ProbAdjPerm prob;
