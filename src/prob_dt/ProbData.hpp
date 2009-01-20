@@ -5,6 +5,7 @@
 #include    "Laplacian.hpp"
 #include	"PermMat.hpp"
 #include	"SimMat.hpp"
+#include	<string>
 
 class ProbAdjPerm
 : public AdjMat
@@ -21,9 +22,13 @@ class ProbAdjPerm
      * Destructor
      */
     virtual ~ProbAdjPerm();
+	
+	inline std::string getId()const{return mId;}
+	inline void setId(const std::string& s){mId=s;}
 
   private:
 
+	std::string mId;
 };
 
 class ProbAdjLapPerm : public ProbAdjPerm , public Laplacian

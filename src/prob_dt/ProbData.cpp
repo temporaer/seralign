@@ -51,5 +51,6 @@ ProbAdjLapPerm::ProbAdjLapPerm(const ProbAdjPerm& p)
 {
 	setAdjMat(p.getAdjMat());
 	setPermMat(p.getPermMat());
+	setId(p.getId());
 }
 
