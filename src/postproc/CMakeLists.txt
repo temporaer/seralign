@@ -22,7 +22,7 @@ SET(SRC
 	GraphVizPrint.cpp GraphVizPrint.hpp
 	PlainPrinter.cpp   PlainPrinter.hpp
 	PosTSVPrinter.cpp PosTSVPrinter.hpp
-	localign_distmat.cpp localign_distmat.hpp
+	#localign_distmat.cpp localign_distmat.hpp
 		)
 
 add_library( postproc SHARED ${SRC} )
