@@ -7,6 +7,7 @@
 #include <factory/factory.h>
 #include <stats.hpp>
 #include <nana.h>
+#undef A
 
 using namespace std;
 using namespace boost;
@@ -41,6 +42,22 @@ bool normalize_direction(ublas::vector<T>& v, ublas::vector<U>& w, int n){
 }
 
 GDistProjectedDB::TCloud
+GDistProjectedDB::addCompleteSpectral(const string& pap_name, const ProbAdjPerm& pap)
+{
+	boost::shared_ptr<AdjMat::AdjMatT> A_ptr(new AdjMat::AdjMatT(*pap.getAdjMat()));
+	AdjMat::AdjMatT& A = *A_ptr;
+	GraphFromAdj g(pap);
+	for(unsigned int i=0;i<A.size1();i++){
+		g.setA(0,i);
+		for(unsigned int j=0;j<A.size2();j++){
+			A(i,j) = g.getDist(0,i,j);
+		}
+	}
+	ProbAdjPerm pap2;
+	pap2.setAdjMat(A_ptr);
+	return addSpectral(pap_name, pap2);
+}
+GDistProjectedDB::TCloud
 GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
 {
 	ProbAdjLapPerm pap2(pap);
@@ -54,9 +71,9 @@ GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
 	ublas::vector<double>::iterator best_lambda;
 
 	lapack::syev( 'V', 'L', Eigv, lambda, lapack::minimal_workspace() );
-	ublas::vector<double> v1 = ublas::column(Eigv,1);
-	ublas::vector<double> v2 = ublas::column(Eigv,2);
-	ublas::vector<double> v3 = ublas::column(Eigv,3);
+	ublas::vector<double> v1 = ublas::column(Eigv,n-1);
+	ublas::vector<double> v2 = ublas::column(Eigv,n-2);
+	ublas::vector<double> v3 = ublas::column(Eigv,n-3);
 	//ublas::vector<int> ranks(n);
 	//normalize_direction(v1,ranks,n);
 	//normalize_direction(v2,ranks,n);
@@ -70,7 +87,7 @@ GDistProjectedDB::addSpectral(const string& pap_name, const ProbAdjPerm& pap)
 		cloud[i].pos[0] = v1[i];
 		cloud[i].pos[1] = v2[i];
 		cloud[i].pos[2] = v3[i];
-		cloud[i].pos[2] = 0;
+		//cloud[i].pos[2] = 0;
 	}
 
 	TICP icp(mICPMaxIters,mICPLambda);

@@ -3,11 +3,12 @@
 #include <ProbData.hpp>
 #include <icp.hpp>
 #include <boost/tuple/tuple.hpp>
+#include "db.hpp"
 #include "DBPoint.hpp"
 
 #define DIM 3
 class GraphFromAdj;
-class GDistProjectedDB{
+class GDistProjectedDB : GraphDB{
 	public: // types
 		//typedef boost::numeric::ublas::vector<double> point_type;
 		typedef double TPrecision;
@@ -26,6 +27,7 @@ class GDistProjectedDB{
 		inline       TICP& operator[](unsigned int i){ return mDB[i];}
 		TCloud add(const std::string& id, const ProbAdjPerm& pap);
 		TCloud addSpectral(const std::string& id, const ProbAdjPerm& pap);
+		TCloud addCompleteSpectral(const std::string& id, const ProbAdjPerm& pap);
 		void configure();
 		inline const std::vector<std::string>& getIDs(){return mIDs;}
 	private:
