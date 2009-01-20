@@ -9,6 +9,7 @@ include_directories(
 	. 
 	${CMAKE_SOURCE_DIR}/configuration
 	${CMAKE_SOURCE_DIR}/graph_gen
+	${CMAKE_SOURCE_DIR}/graph_embedder
 	${CMAKE_SOURCE_DIR}/seriation_gen
 	${CMAKE_SOURCE_DIR}/prob_dt
 	${CMAKE_SOURCE_DIR}/sdp_wrappers
