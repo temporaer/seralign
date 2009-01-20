@@ -25,6 +25,9 @@ namespace fs = boost::filesystem;
 #include <DegreeSort.hpp>
 #include <GraphFromAdj.hpp>
 
+#include <graph_embedder.hpp> 
+#include <anndb.hpp>
+
 #include "build_db.hpp"
 
 #include <postproc.hpp>
@@ -34,13 +37,15 @@ namespace fs = boost::filesystem;
 
 #include <nana.h>
 
+
 using namespace std;
 using namespace boost;
 
 
 void BuildDB::operator()()
 {
-	mDB.configure();
+	mDB.reset( new ANNDB() );
+	mDB->configure();
 
 	string adjmat_gen_name               = gCfg().getString("serialize.adjmat_gen");
 	auto_ptr<AdjMatGen> adjmat_gen       = genericFactory<AdjMatGen>::instance().create(adjmat_gen_name);
@@ -60,79 +65,83 @@ void BuildDB::operator()()
 	bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
 
-	int emb_meth    = gCfg().getInt("BuildDB.embed_meth");
+	string gemb_name                     = gCfg().getString("BuildDB.embed_meth");
+	auto_ptr<GraphEmbedder> gemb_ptr     = genericFactory<GraphEmbedder>::instance().create(gemb_name);
+	if(!gemb_ptr.get())
+		throw logic_error(string("Supplied Embedding Method `") + gemb_name + "' does not exist");
 	
 	string ofile("centroids.dat");
 	string opath =  gCfg().getString("output-dir");
 	ofstream ofp( (fs::path(opath) / fs::path(ofile)).string().c_str());
+
+	int embed_dim = gCfg().getInt("BuildDB.embed_dim");
+
+	gemb_ptr->configure();
+	ExactDescriptiveStatistics nstats("nstats");
 	
 	ProgressBar pb(max_num==0?200:max_num, "serializing");
 	while(true){
 		if(nonverbose) { pb.inc();                                          }
 		if(verbose)    { L("Action::BuildDB %03d: Generating...\n", cnt); }
-		ProbAdjPerm tmp =  (*adjmat_gen)() ;
-		ProbAdjLapPerm prob ( tmp );
+		ProbAdjPerm prob =  (*adjmat_gen)() ;
 		if(!adjmat_gen->hasNext())
 			break;
+		nstats.notify(prob.getAdjMat()->size1());
 		// WARNING: Permutation is dangerous, since modules later 
 		// on do not have access to the permutation matrix!
 		shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
 		*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
 		prob.setPermMat(P_ptr);
-		prob.calculateLaplacian();
 
 		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
-		GDistProjectedDB::TCloud cloud;
-		if(emb_meth==0)
-			cloud        = mDB.addSpectral(adjmat_gen->getGraphID(), prob);
-		else if(emb_meth==1)
-			cloud        = mDB.add(adjmat_gen->getGraphID(), prob);
-		else
-			throw runtime_error("unknown embedding method!");
-		GDistProjectedDB::TICP::TVec centroid = mDB.back().getModelCentroid();
-		ofp << centroid[0] <<"\t"<<centroid[1]<<"\t"<<centroid[2]<<"\t"<<adjmat_gen->getClassID()<<endl;
-		
-
-		//out_ptr->atSeriation(*adjmat_gen, cloud, prob);
+		GraphEmbedder::cloud_type cloud = (*gemb_ptr)(prob,embed_dim);
+		if(adjmat_gen->getClassID() == 1)
+		mDB->add(prob, cloud);
 
 		cnt++;
 		if(cnt == max_num)
 			break;
 	}
+	mDB->finish();
+	cout <<nstats<<endl;
 	if(nonverbose) { pb.finish(); }
 	//out_ptr->atEnd();
 	
 	int evalMode = gCfg().getInt("BuildDB.evalmode");
 
 
+	
 	if(evalMode ==0)
-		printDistMatrix(cnt);
+		throw runtime_error("evalMode not implemented");
+		//printDistMatrix(cnt);
 	else if(evalMode == 1)
 		spatialAnalysis(cnt, *adjmat_gen);
 	else if(evalMode == 2){
-		int qid = gCfg().getInt("BuildDB.query_id");
-		ExactDescriptiveStatistics stats("accuracy");
-		ProgressBar pbclass(cnt,"KNN Classify");
-		Gnuplot gp("lines");
-		gp.set_yrange(0,1);
-		std::vector<float> statsv;
-		int K = gCfg().getInt("BuildDB.knn_k"); 
-		for(int i=0;i<cnt;i++){
-			pbclass.inc();
-			int klass = knn_classify(cnt, i, *adjmat_gen, *out_ptr, K);
-			stats.notify(klass == adjmat_gen->getClassID(mDB.getIDs()[i]) ? 1 : 0);
-			statsv.push_back(stats.getMean());
-			if(cnt % 20 == 0){
-				gp.reset_plot();
-				gp.plot_x(statsv,"accuracy");
-			}
-		}
-		pbclass.finish();
-		cout <<stats<<endl;
+		throw runtime_error("evalMode not implemented");
+		//int qid = gCfg().getInt("BuildDB.query_id");
+		//ExactDescriptiveStatistics stats("accuracy");
+		//ProgressBar pbclass(cnt,"KNN Classify");
+		//Gnuplot gp("lines");
+		//gp.set_yrange(0,1);
+		//std::vector<float> statsv;
+		//int K = gCfg().getInt("BuildDB.knn_k"); 
+		//for(int i=0;i<cnt;i++){
+			//pbclass.inc();
+			//int klass = knn_classify(cnt, i, *adjmat_gen, *out_ptr, K);
+			//stats.notify(klass == adjmat_gen->getClassID(mDB.getIDs()[i]) ? 1 : 0);
+			//statsv.push_back(stats.getMean());
+			//if(cnt % 20 == 0){
+				//gp.reset_plot();
+				//gp.plot_x(statsv,"accuracy");
+			//}
+		//}
+		//pbclass.finish();
+		//cout <<stats<<endl;
 	}else
 		cout << "Unknown EvalMode"<<endl;
 }
 
+/*
 int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k){
 	//bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
@@ -212,6 +221,9 @@ int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k)
 			bl::bind<const int&>(&CCItP::second, bl::_2))
 			->first;
 }
+*/
+
+/*
 void BuildDB::printDistMatrix(int cnt){
 	//bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
@@ -250,6 +262,8 @@ void BuildDB::printDistMatrix(int cnt){
 		os << endl;
 	}
 }
+*/
+/*
 double
 BuildDB::match(GDistProjectedDB::TICP& a,GDistProjectedDB::TICP& b){
 	vector<GDistProjectedDB::point_type> query1, query2;
@@ -263,6 +277,7 @@ BuildDB::match(GDistProjectedDB::TICP& a,GDistProjectedDB::TICP& b){
 			GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
 	return a.getMatchingError() + b.getMatchingError();
 }
+*/
 
 BuildDB::~BuildDB()
 {
@@ -297,67 +312,31 @@ int spatialHash(
 	return spatialHash(npt, res);
 }
 
+ublas::vector<double> f(const ublas::vector<double>& v){
+	ublas::vector<double> w(v);
+	//double d = ublas::norm_2(v);
+	//if(d>0.00000000001)
+		//w /= d*d;
+	return w;
+}
+
 void BuildDB::spatialAnalysis(int cnt, AdjMatGen& adjmatgen)
 {  
-	GDistProjectedDB::iterator cit;
-	GDistProjectedDB::TICP::iterator pit;
-	ublas::vector<double> maxv = ublas::scalar_vector<double>(DIM, INT_MIN); 
-	ublas::vector<double> minv = ublas::scalar_vector<double>(DIM, INT_MAX); 
-
-	// determine spatial extent
-	cout << "determining max/min of space..."<<endl;
-	for( cit=mDB.begin(); cit!=mDB.end(); cit++){
-		GDistProjectedDB::TICP & c = *cit;
-		for( pit = c.begin(); pit != c.end(); pit++){
-			const GDistProjectedDB::point_type& p = *pit;
-			for(int i=0;i<DIM;i++){
-				maxv[i] = max(p[i], maxv[i]);
-				minv[i] = min(p[i], minv[i]);
-			}
+	ofstream os("/tmp/spatdb.csv");
+	for(int c=0;c<cnt;c++){
+		ublas::vector<int> v = mDB->getFeatures(c);
+		string s             = mDB->getPap(c).getId();
+		int klass            = adjmatgen.getClassID(s);
+		if(c==0){
+			// header
+			for(unsigned int i=0;i<v.size();i++)
+				os<<"c"<<i<<",";
+			os<<"klass"<<endl;
 		}
+		for(unsigned int i=0;i<v.size();i++)
+			os<<v(i)<<",";
+		os<<"c"<<klass<<endl;
 	}
-	maxv += ublas::scalar_vector<double>(DIM, 0.0001); 
-
-	// hash all points
-	const int resi = 25;
-	ublas::vector<int> res = ublas::scalar_vector<int>(DIM, resi);
-	map<int,int> distr;
-	cout << "determining distribution of space..."<<endl;
-	ProgressBar pb(cnt,"distr");
-	cnt=0;
-	for( cit=mDB.begin(); cit!=mDB.end(); cit++){
-		GDistProjectedDB::TICP & c = *cit;
-		pb.inc();
-		int klass = (adjmatgen.getClassID(mDB.getIDs()[cnt++]) == 0) ? -1 : 1;
-
-		for( pit = c.begin(); pit != c.end(); pit++){
-			const GDistProjectedDB::point_type& p = *pit;
-			int h = spatialHash(minv,maxv,res,(GDistProjectedDB::TICP::TVec)p) ;
-			if(distr.find(h) == distr.end())
-				distr[h]  = klass;
-			else
-				distr[h] += klass;
-		}
-	}
-	pb.finish();
-
-	ofstream os ("/tmp/spat.dat");
-	for(int i=0; i<resi; i++){
-		for(int j=0; j<resi; j++){
-			int sum = 0;
-			for(int k=0; k<resi; k++){
-				ublas::vector<int> v(3);
-				v(0) = i; v(1) = j; v(2) = k;
-				int h = spatialHash(v,res);
-				if(distr.find(h) != distr.end())
-					sum += distr[h];
-			}
-
-			os << i << " " << j <<" " << sum<<endl;
-		}
-		os << endl;
-	}
-	
 }
 
 
