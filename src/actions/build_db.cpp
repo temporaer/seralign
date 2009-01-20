@@ -95,7 +95,7 @@ void BuildDB::operator()()
 
 		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
 		GraphEmbedder::cloud_type cloud = (*gemb_ptr)(prob,embed_dim);
-		if(adjmat_gen->getClassID() == 1)
+		//if(adjmat_gen->getClassID() == 1)
 		mDB->add(prob, cloud);
 
 		cnt++;
