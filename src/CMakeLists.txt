@@ -103,6 +103,7 @@ ADD_SUBDIRECTORY( prob_dt )
 ADD_SUBDIRECTORY( configuration )
 ADD_SUBDIRECTORY( sdp_wrappers )
 ADD_SUBDIRECTORY( graph_gen )
+ADD_SUBDIRECTORY( graph_embedder )
 ADD_SUBDIRECTORY( seriation_gen )
 ADD_SUBDIRECTORY( postproc )
 ADD_SUBDIRECTORY( db )
@@ -114,6 +115,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/configuration 
   ${CMAKE_SOURCE_DIR}/sdp_wrappers 
   ${CMAKE_SOURCE_DIR}/graph_gen
+  ${CMAKE_SOURCE_DIR}/graph_embedder
   ${CMAKE_SOURCE_DIR}/seriation_gen
   ${CMAKE_SOURCE_DIR}/postproc
   )
@@ -153,6 +155,7 @@ target_link_libraries(hrmain
 	hrconfig 
 	hrtools
 	hrdb
+	graphemb
 	graph_gen
 	prob_dt
 	seriation_gen
