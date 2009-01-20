@@ -15,13 +15,30 @@ namespace ublas = boost::numeric::ublas;
 void FullConnAdjmatGen::configure()
 {
 	AdjMatGen::configure(); 
-	mSize = gCfg().getInt("fullconn_adjmat_gen.size");
-	mDim  = gCfg().getInt("fullconn_adjmat_gen.dim");
+	mSize    = gCfg().getInt("fullconn_adjmat_gen.size");
+	mPatSize = gCfg().getInt("fullconn_adjmat_gen.patsize");
+	mJumble  = gCfg().getBool("fullconn_adjmat_gen.jumble");
+
+	mPatClass0 = ublas::scalar_matrix<int>(mSize, mSize,0);
+	mPatClass1 = ublas::scalar_matrix<int>(mSize, mSize,0);
+
+	int j;
+	for(int i=0;i<mPatSize; i++){
+		do { j = drand48() * mPatSize; } while(j==i);
+		mPatClass0(j,i) = mPatClass0(i,j) = 1;
+
+		do { j = drand48() * mPatSize; } while(j==i);
+		mPatClass1(j,i) = mPatClass1(i,j) = 1;
+	}
+	//matlab_matrix_out(cout, "pat1", mPatClass1);
+	//matlab_matrix_out(cout, "pat0", mPatClass0);
 }
 
 FullConnAdjmatGen::FullConnAdjmatGen()
-	:mSize(25),mDim(2),mRunningID(0),mAdj(mSize,mSize)
+	:mSize(25),mRunningID(0),mPatSize(10),mAdj(mSize,mSize)
 {
+	mPatClass0 = AdjMat::AdjMatT(mSize, mSize);
+	mPatClass1 = AdjMat::AdjMatT(mSize, mSize);
 }
 bool FullConnAdjmatGen::hasNext()
 {
@@ -50,59 +67,52 @@ std::string FullConnAdjmatGen::getPlainDescription(int ser_idx, const Serializat
 }
 int FullConnAdjmatGen::getClassID(const string& ref)
 {
-	I(ref == "");
-	return (mRunningID - (mRunningID % 30))/30;
+	if(ref=="")
+		return mRunningID % 2;
+	return mDescriptors[ref].mClassID;
 }
 
 ProbAdjPerm FullConnAdjmatGen::operator()()
 {
-	if((mRunningID%30) == 0)
-	{
-		mVertexPos.clear();
-		for(int i=0;i<mSize;i++){
-			ublas::vector<double> v(mDim);
-			for(int d=0;d<mDim;d++){
-				v(d) = drand48();
-			}
-			mVertexPos.push_back(v); 
-		}
+	mRunningID++;
+	shared_ptr<AdjMat::AdjMatT> adj(new AdjMat::AdjMatT(mSize,mSize));
+
+	Descriptor desc;
+	desc.mA_ptr = adj;
+	
+	// determine what to copy
+	if(mRunningID%2){
+		*adj = mPatClass1;
+		desc.mClassID = 1;
+	}
+	else{
+		*adj = mPatClass0;
+		desc.mClassID = 0;
 	}
 
-	vector<ublas::vector<double> > vp = mVertexPos;
-	for(int i=0;i<mSize;i++){
-		ublas::vector<double>& v = vp[i];
-		for(int d=0;d<mDim;d++){
-			const float f = 0.1;
-			v(d) += f*drand48()-0.5*f; // move vertices a bit
-		}
+	// save info
+	mDescriptors[getGraphID("")] = desc;
+
+	// modify
+	int j;
+	for(int i=mPatSize; i<mSize; i++){
+		do { j = drand48() * (mSize-mPatSize); } while(j==i);
+		I(mPatSize+j >=mPatSize);
+		I(mPatSize+j < mSize);
+		(*adj)(i,mPatSize+j) = 1;
+		(*adj)(mPatSize+j,i) = 1;
 	}
-	shared_ptr<AdjMat::AdjMatT> adj(new AdjMat::AdjMatT(mSize,mSize));
-	for(int i=0;i<mSize;i++)
-		for(int j=0;j<mSize;j++)
-		{
-			if((i+j)%2 != 0)
-				(*adj)(i,j) = ublas::norm_2(vp[i]-vp[j]);
-			else
-				(*adj)(i,j) = 0;
-		}
+
 
 	ProbAdjPerm pap;
 	pap.setAdjMat(adj);
+	pap.setId(getGraphID(""));
 
-	//JumbledAdjMatGen jumb(pap);
+	if(mJumble){
+		JumbledAdjMatGen jumb(pap);
+		pap = jumb();
+	}
 
-	//pap = jumb();
-
-	for(unsigned int i=0;i<adj->size1();i++)
-		for(unsigned int j=0;j<adj->size2();j++)
-		{
-			if(fabs((*adj)(i,j)) > 10)
-				cout << "arrgh!"<<endl;
-			if(((*adj)(i,j)) != ((*adj)(i,j)))
-				cout << "arrgh!"<<endl;
-		}
-
-	mRunningID++;
 	return pap;
 }
 

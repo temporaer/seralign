@@ -40,7 +40,8 @@ AdjMatGenCfg::AdjMatGenCfg(){
 	options_description fullconn_amg("  FullConn AdjMatGen");
 	fullconn_amg.add_options()
 		("fullconn_adjmat_gen.size", value<int>()->default_value(15), "Size of Graph to generate")
-		("fullconn_adjmat_gen.dim",  value<int>()->default_value(2), "dimensions the Vertices should live in")
+		("fullconn_adjmat_gen.patsize",  value<int>()->default_value(5), "Size of Pattern in Graph to generate")
+		("fullconn_adjmat_gen.jumble",  value<bool>()->default_value(false), "Whether to jumble the matrices")
 		;
 	od.add(rand_amg);
 	od.add(randpat_amg);
