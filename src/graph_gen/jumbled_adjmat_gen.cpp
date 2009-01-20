@@ -25,6 +25,7 @@ ProbAdjPerm JumbledAdjMatGen::operator()()
 	matrix<double> tmp(n,n);
 	noalias(tmp) = prod(*perm, *mPap.getAdjMat());
 	pap.setAdjMat( boost::shared_ptr<AdjMat::AdjMatT>(new AdjMat::AdjMatT(prod(tmp, trans(*perm)))));
+	pap.setId(mPap.getId());
 	
 	// save perm mat in problem
 	if(mPap.getPermMat().get() == NULL){
