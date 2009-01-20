@@ -62,6 +62,7 @@ struct Mutagenesis::Impl{
 
 double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j, double b){
 	if (b==0) return 0;
+	if(i>=mCurDesc.mTypes.size()) return 0;
 	double d = 0.0;
 	int    n = 0;
 	if(mCurDesc.mTypes[i]  == mCurDesc.mTypes[j])  d+=1; n++;
@@ -73,6 +74,7 @@ double Mutagenesis::Impl::kernelNienhuysCheng(int i, int j, double b){
 }
 double Mutagenesis::Impl::kernelTypeSum(int i, int j, double b){
 	if(b==0) return 0;
+	if(i>=mCurDesc.mTypes.size()) return 0;
 	double d = 0.0;
 	map<string, double> m;
 	m["n"]  = 0.3;
@@ -88,6 +90,7 @@ double Mutagenesis::Impl::kernelTypeSum(int i, int j, double b){
 }
 double Mutagenesis::Impl::kernelTypeAndWeightEq(int i, int j, double b){
 	if(b==0) return 0;
+	if(i>=mCurDesc.mTypes.size()) return 0;
 	double d = 0.0;
 	if(mCurDesc.mTypes[i] == mCurDesc.mTypes[j]) d+=0.25;
 	if(mCurDesc.mParam1[i] == mCurDesc.mParam1[j]) d+=0.25;
@@ -101,6 +104,7 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s,
 	stringstream str;
 	AdjMat::AdjMatT& A = *d.mA_ptr;
 	unsigned int idx = s.getRanks()[ser_idx];
+	if(idx >= d.mTypes.size()) { str<<"Dummy"; return str.str(); }
 	str << d.mTypes[idx];
 	if(mIncludeGraphNeighbours){
 		str << "[";
@@ -120,10 +124,7 @@ string Mutagenesis::Impl::getPlainDescription(int ser_idx,const Serialization&s,
 string Mutagenesis::Impl::getPrologDescription(int ser_idx,const Serialization&s, const string& ref){
 	Descriptor& d = (ref=="")?mCurDesc : mDescriptors[ref];
 	unsigned int idx = s.getRanks()[ser_idx];
-	if(idx>=d.mTypes.size()){
-		L("idx = %d, size = %d\n",idx,d.mTypes.size()); 
-		throw runtime_error("Mutagenesis::getPrologDescription(): Index too large");
-	}
+	if(idx >= d.mTypes.size()) { return string("dummy"); }
 	ostringstream o;
 	if(d.mTypes[idx] == "b"){
 		// bond
@@ -170,7 +171,7 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 	vector<string> types;
 	vector<string> param1;
 	vector<string> param2;
-	int n = -1;
+	int n = -1, actualn = -1;
 
 	getline(mInputStream, line);
 	mCurDesc.mName = line;
@@ -185,16 +186,18 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 			for(int i=0;i<addParams;i++) strvec.pop_front(); // ignore 1st 4 "None"s
 			list<string>::iterator it = strvec.begin();
 			copy(it,strvec.end(),back_inserter(names));
-			n = names.size();
+			actualn = names.size();
+			n = 40;
 			mCurDesc.mA_ptr.reset(new ublas::matrix<double>(n,n));
+			*mCurDesc.mA_ptr = ublas::scalar_matrix<double>(n,n,0.0);
 			cnt++;
 			continue;
 		}
 		AdjMat::AdjMatT& A = *mCurDesc.mA_ptr;
-		if(A.size1() != strvec.size()-addParams){
-			if(cnt-1 == n)
+		if(actualn != strvec.size()-addParams){
+			if(cnt-1 == actualn)
 				break;
-			L("Breaking at cnt=%d n=%d A.size1()=%d, strvecsize=%d\n",cnt,n,A.size1(),strvec.size());
+			L("Breaking at cnt=%d n=%d A.size1()=%d, strvecsize=%d\n",cnt,actualn,A.size1(),strvec.size());
 			throw runtime_error("Mutagenesis::Impl::nextGraph() -- input file format error");
 		}
 		list<string>::iterator it = strvec.begin();
@@ -224,6 +227,7 @@ ProbAdjPerm Mutagenesis::Impl::nextGraph(){
 
 	ProbAdjPerm prob;
 	prob.setAdjMat(mCurDesc.mA_ptr);
+	prob.setId(mCurDesc.mName);
 	mDescriptors[mCurDesc.mName] = mCurDesc;
 
 	return prob;
