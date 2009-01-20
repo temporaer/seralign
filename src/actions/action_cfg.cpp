@@ -29,10 +29,9 @@ ActionCfg::ActionCfg(){
 		;
 	options_description builddb("  BuildDB Options");
 	builddb.add_options()
-		("BuildDB.knn_k", value<int>()->default_value(3), "k for knn")
-		("BuildDB.query_id,p", value<int>()->default_value(0), "ID of object to query")
 		("BuildDB.evalmode", value<int>()->default_value(1), "0printDistMat 1spatAnalysis 2knn")
-		("BuildDB.embed_meth", value<int>()->default_value(0), "0spectral 1fastmap")
+		("BuildDB.embed_meth", value<string>()->default_value("HeatkernelGraphEmbedder"), "Embedder to use")
+		("BuildDB.embed_dim", value<int>()->default_value(2), "dimension of embedding-space")
 		;
 	od.add(serialize);
 	od.add(fastmap);
