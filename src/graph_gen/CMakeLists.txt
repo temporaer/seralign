@@ -21,6 +21,7 @@ include_directories(
 
 SET(SRC 
 		adjmat_gen.cpp        adjmat_gen.hpp
+		sdf_adjmat_gen.cpp    sdf_adjmat_gen.hpp
         random_adjmat_gen.cpp random_adjmat_gen.hpp
         mutagenesis.cpp       mutagenesis.hpp
 		adjmat_gen_cfg.cpp 
