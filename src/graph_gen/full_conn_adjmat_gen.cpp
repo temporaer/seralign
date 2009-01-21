@@ -23,15 +23,19 @@ void FullConnAdjmatGen::configure()
 	mPatClass1 = ublas::scalar_matrix<int>(mSize, mSize,0);
 
 	int j;
+	//for(int i=0;i<mPatSize; i++){
+		//do { j = drand48() * mPatSize; } while(j==i);
+		//mPatClass0(j,i) = mPatClass0(i,j) = 1;
+
+		//do { j = drand48() * mPatSize; } while(j==i);
+		//mPatClass1(j,i) = mPatClass1(i,j) = 1;
+	//}
+
 	for(int i=0;i<mPatSize; i++){
 		do { j = drand48() * mPatSize; } while(j==i);
-		mPatClass0(j,i) = mPatClass0(i,j) = 1;
-
-		do { j = drand48() * mPatSize; } while(j==i);
+		mPatClass0(j,i) = mPatClass0(i,j) = 2;
 		mPatClass1(j,i) = mPatClass1(i,j) = 1;
 	}
-	//matlab_matrix_out(cout, "pat1", mPatClass1);
-	//matlab_matrix_out(cout, "pat0", mPatClass0);
 }
 
 FullConnAdjmatGen::FullConnAdjmatGen()
@@ -99,8 +103,9 @@ ProbAdjPerm FullConnAdjmatGen::operator()()
 		do { j = drand48() * (mSize-mPatSize); } while(j==i);
 		I(mPatSize+j >=mPatSize);
 		I(mPatSize+j < mSize);
-		(*adj)(i,mPatSize+j) = 1;
-		(*adj)(mPatSize+j,i) = 1;
+		int val = drand48() > 0.5 ? 2 : 1;
+		(*adj)(i,mPatSize+j) = val;
+		(*adj)(mPatSize+j,i) = val;
 	}
 
 
