@@ -17,6 +17,9 @@ class GraphDB{
 		{
 			throw std::runtime_error("getFeatures() not overloaded by your DB");
 		}
+		virtual const TCloud& getCloud(int i){
+			throw std::runtime_error("getFeatures() not overloaded by your DB");
+		}
 		virtual void init(int dim){};
 		virtual void finish(){};
 		inline unsigned int size() { return mPaps.size(); }
