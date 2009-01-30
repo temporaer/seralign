@@ -36,17 +36,17 @@ SpectralGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
 
 	lapack::syev( 'V', 'L', Eigv, lambda, lapack::minimal_workspace() );
 	int start_lambda = 0;
-	while(true)
+	while(start_lambda<lambda.size()-1)
 	{
 		if(fabs(lambda(start_lambda)) > 1E-6)
 			break;
 		start_lambda++;
 	}
-	ublas::vector<double> v1 = ublas::column(Eigv,start_lambda + 0);
-	ublas::vector<double> v2 = ublas::column(Eigv,start_lambda + 1);
-	ublas::vector<double> v3 = ublas::column(Eigv,start_lambda + 2);
-	ublas::vector<double> v4 = ublas::column(Eigv,start_lambda + 3);
-	ublas::vector<double> v5 = ublas::column(Eigv,start_lambda + 4);
+	ublas::vector<double> v1 = ublas::column(Eigv,min(start_lambda + 0, n-1));
+	ublas::vector<double> v2 = ublas::column(Eigv,min(start_lambda + 1, n-1));
+	ublas::vector<double> v3 = ublas::column(Eigv,min(start_lambda + 2, n-1));
+	ublas::vector<double> v4 = ublas::column(Eigv,min(start_lambda + 3, n-1));
+	ublas::vector<double> v5 = ublas::column(Eigv,min(start_lambda + 4, n-1));
 	//ublas::vector<int> ranks(n);
 	//normalize_direction(v1,ranks,n);
 	//normalize_direction(v2,ranks,n);
@@ -56,8 +56,8 @@ SpectralGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
 	cloud_type cloud(n, point_type(dim,0));
 	// create point cloud
 	for(int i=0;i<n;i++){
-		for(int d=0;d<dim;d++)
-			cloud[i][d] = Eigv(i,start_lambda+d);
+		for(int d=0;d<min(dim,n-1);d++)
+			cloud[i][d] = Eigv(i,min(start_lambda+d,n-1));
 	}
 
 	return cloud;

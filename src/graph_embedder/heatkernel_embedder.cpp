@@ -66,7 +66,7 @@ HeatkernelGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
 	// calculate heat kernel
 	ublas::matrix<double,ublas::column_major> H(n,n);
 	for(int i=0; i<n; i++){
-		for(int j=i; j<n; j++){
+		for(int j=0; j<min(dim,n-1); j++){
 			double sum=0.0;
 			for(int k=0; k<n; k++){
 				double e = exp(-lambda(k) * mT);
@@ -83,7 +83,7 @@ HeatkernelGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
 	cloud_type cloud(n, point_type(dim,0));
 	// create point cloud
 	for(int i=0;i<n;i++){
-		for(int d=0;d<dim;d++)
+		for(int d=0;d<min(dim, n-1);d++)
 			cloud[i][d] = H(i,d);
 	}
 
