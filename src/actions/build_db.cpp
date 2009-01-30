@@ -79,7 +79,7 @@ void BuildDB::operator()()
 	gemb_ptr->configure();
 	ExactDescriptiveStatistics nstats("nstats");
 	
-	ProgressBar pb(max_num==0?200:max_num, "serializing");
+	ProgressBar pb(max_num==0?41100:max_num, "serializing");
 	while(true){
 		if(nonverbose) { pb.inc();                                          }
 		if(verbose)    { L("Action::BuildDB %03d: Generating...\n", cnt); }
@@ -320,6 +320,34 @@ ublas::vector<double> f(const ublas::vector<double>& v){
 	return w;
 }
 
+void BuildDB::spatialAnalysisCloud(int cnt, AdjMatGen& adjmatgen)
+{
+	ofstream os("/tmp/spatdb.csv");
+	for(int c=0;c<cnt;c++){
+		const GraphDB::TCloud& cloud = mDB->getCloud(c);
+		string s                     = mDB->getPap(c).getId();
+		int klass                    = adjmatgen.getClassID(s);
+		if(c==0){
+			// header
+			for(unsigned int i=0;i<cloud[0].size()*cloud.size();i++)
+				os<<"c"<<i<<",";
+			os<<"klass"<<endl;
+		}
+		for(unsigned int i=0;i<cloud.size();i++){
+			const ublas::vector<double>& c = cloud[i];
+			for(unsigned int j=0;j<c.size();j++){
+				double d = c[i];
+				if(fabs(d)>1E6) // TODO: woher kommen die groszen zahlen?
+					d=0.0;
+				if(fabs(d)<1E-20) 
+					d=0.0;
+				os << d<<",";
+			}
+		}
+		os << "c"<<klass<<endl;
+	}
+}
+
 void BuildDB::spatialAnalysis(int cnt, AdjMatGen& adjmatgen)
 {  
 	ofstream os("/tmp/spatdb.csv");
@@ -327,6 +355,12 @@ void BuildDB::spatialAnalysis(int cnt, AdjMatGen& adjmatgen)
 		ublas::vector<int> v = mDB->getFeatures(c);
 		string s             = mDB->getPap(c).getId();
 		int klass            = adjmatgen.getClassID(s);
+#define NUMATOM_ONLY 0
+#if NUMATOM_ONLY
+		if(c==0)
+			os << "numAtom,klass"<<endl;
+		os << mDB->getPap(c).getAdjMat()->size1()<<",";
+#else
 		if(c==0){
 			// header
 			for(unsigned int i=0;i<v.size();i++)
@@ -335,6 +369,7 @@ void BuildDB::spatialAnalysis(int cnt, AdjMatGen& adjmatgen)
 		}
 		for(unsigned int i=0;i<v.size();i++)
 			os<<v(i)<<",";
+#endif
 		os<<"c"<<klass<<endl;
 	}
 }
