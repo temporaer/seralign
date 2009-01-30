@@ -23,30 +23,30 @@ bool AdjMatGen::hasNext()
 	return true;
 }
 
-string AdjMatGen::getPlainDescription(int ser_idx, const Serialization&, const std::string& ref)
+string AdjMatGen::getPlainDescription(int ser_idx, const Serialization&, const boost::any& ref)
 {
 	throw runtime_error("AdjMatGen::getPlainDescription() not implemented for subclass"); 
 }
-string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&, const std::string& ref)
+string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&, const boost::any& ref)
 {
 	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 
 }
 
-int AdjMatGen::getClassID(const std::string& ref)
+int AdjMatGen::getClassID(const boost::any& ref)
 {
 	return 0;
 }
 boost::shared_ptr<AdjMat::AdjMatT> 
-AdjMatGen::getAdjMat(const std::string& ref)
+AdjMatGen::getAdjMat(const boost::any& ref)
 {
 	throw runtime_error("AdjMatGen::getAdjMat() not implemented for subclass"); 
 }
-string AdjMatGen::getGraphID(const std::string& ref)
+string AdjMatGen::getGraphID(const boost::any& ref)
 {
 	throw runtime_error("AdjMatGen::getGraphID() not implemented for subclass"); 
 }
 
-std::string AdjMatGen::getGraphVizNodeAttribs(int idx, const std::string& ref)
+std::string AdjMatGen::getGraphVizNodeAttribs(int idx, const boost::any& ref)
 {
 	return string("");
 }

@@ -19,23 +19,23 @@ class AdjMatGen {
 		virtual bool hasNext();            ///< whether there are more adjacency-matrices available.
 
 		///< which class the graph belongs to
-		virtual int getClassID(const std::string&ref="");          
+		virtual int getClassID(const boost::any&);          
 
 		/// get a description of the node content in the form of a prolog program
-		virtual std::string getPrologDescription(int ser_idx, const Serialization& s, const std::string& ref="");
+		virtual std::string getPrologDescription(int ser_idx, const Serialization& s, const boost::any&);
 
 		/// get a description of the node content suitable for one-line-per serialization presentation
-		virtual std::string getPlainDescription(int ser_idx, const Serialization& s, const std::string& ref="");
+		virtual std::string getPlainDescription(int ser_idx, const Serialization& s, const boost::any&);
 
 		/// get a unique id for the graph
-		virtual std::string getGraphID(const std::string&ref="");
+		virtual std::string getGraphID(const boost::any&);
 
 		/// get adjacency matrix of graph
-		virtual boost::shared_ptr<AdjMat::AdjMatT> getAdjMat(const std::string&ref="");
+		virtual boost::shared_ptr<AdjMat::AdjMatT> getAdjMat(const boost::any&);
 
 		/// for drawing: return additional node attributes in graphviz-syntax.
 		/// should start with a comma if none-empty!
-		virtual std::string getGraphVizNodeAttribs(int idx,const std::string&ref=""); 
+		virtual std::string getGraphVizNodeAttribs(int idx,const boost::any&); 
 
 		/// whether to be verbose
 		static inline void setVerbose(bool b)  {mVerbose=b;}

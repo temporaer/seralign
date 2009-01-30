@@ -2,6 +2,7 @@
 #include <configuration.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector_proxy.hpp>
+#include <boost/format.hpp>
 #include <factory/factory.h>
 #include <matlab_io.hpp>
 #include "full_conn_adjmat_gen.hpp"
@@ -33,8 +34,8 @@ void FullConnAdjmatGen::configure()
 
 	for(int i=0;i<mPatSize; i++){
 		do { j = drand48() * mPatSize; } while(j==i);
-		mPatClass0(j,i) = mPatClass0(i,j) = 2;
-		mPatClass1(j,i) = mPatClass1(i,j) = 1;
+		mPatClass0(j,i) = mPatClass0(i,j) = drand48()>.5?2:1;
+		mPatClass1(j,i) = mPatClass1(i,j) = drand48()>.5?2:1;
 	}
 }
 
@@ -51,29 +52,25 @@ bool FullConnAdjmatGen::hasNext()
 FullConnAdjmatGen::~FullConnAdjmatGen()
 {
 }
-std::string FullConnAdjmatGen::getGraphID(const string& ref)
+std::string FullConnAdjmatGen::getGraphID(const boost::any& ref)
 {
-	I(ref == "");
 	stringstream str;
-	str<<"fullconngraph_"<<mSize<<"_"<<mRunningID;
-	return str.str();
+	//str<<"fullconngraph_"<<mSize<<"_"<<mRunningID;
+	return any_cast<Descriptor*>(ref)->mName;
 }
-std::string FullConnAdjmatGen::getGraphVizNodeAttribs(int idx, const string& ref)
+std::string FullConnAdjmatGen::getGraphVizNodeAttribs(int idx, const boost::any& ref)
 {
-	I(ref == "");
-	return string("");
-}
-std::string FullConnAdjmatGen::getPlainDescription(int ser_idx, const Serialization& ser, const string& ref)
-{
-	I(ref == "");
 	stringstream str;
 	return str.str();
 }
-int FullConnAdjmatGen::getClassID(const string& ref)
+std::string FullConnAdjmatGen::getPlainDescription(int ser_idx, const Serialization& ser, const boost::any& ref)
 {
-	if(ref=="")
-		return mRunningID % 2;
-	return mDescriptors[ref].mClassID;
+	stringstream str;
+	return str.str();
+}
+int FullConnAdjmatGen::getClassID(const boost::any& ref)
+{
+	return any_cast<Descriptor*>(ref)->mClassID;
 }
 
 ProbAdjPerm FullConnAdjmatGen::operator()()
@@ -83,6 +80,7 @@ ProbAdjPerm FullConnAdjmatGen::operator()()
 
 	Descriptor desc;
 	desc.mA_ptr = adj;
+	desc.mName  = (format("fullconngraph_%d_%d")%mSize%mRunningID).str();
 	
 	// determine what to copy
 	if(mRunningID%2){
@@ -95,7 +93,7 @@ ProbAdjPerm FullConnAdjmatGen::operator()()
 	}
 
 	// save info
-	mDescriptors[getGraphID("")] = desc;
+	mDescriptors.push_back(desc);
 
 	// modify
 	int j;
@@ -112,6 +110,7 @@ ProbAdjPerm FullConnAdjmatGen::operator()()
 	ProbAdjPerm pap;
 	pap.setAdjMat(adj);
 	pap.setId(getGraphID(""));
+	pap.setBackground(&mDescriptors.back());
 
 	if(mJumble){
 		JumbledAdjMatGen jumb(pap);

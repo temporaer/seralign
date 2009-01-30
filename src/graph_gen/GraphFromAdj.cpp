@@ -100,8 +100,9 @@ double GraphFromAdj::Impl::getDist(unsigned int k, const vertex_descriptor& i, c
 		dist2 -= dxij*dxij;
 	}
 #ifndef NDEBUG
-	if(dist2<-1E-5) cerr << "Warning: getDist: 0>dist2="<<dist2<<endl;
+	//if(dist2<-1E-5) cerr << "Warning: getDist: 0>dist2="<<dist2<<endl;
 #endif
+	//return sqrt(max(0.0,dist2));
 	return sqrt(fabs(dist2));
 }
 

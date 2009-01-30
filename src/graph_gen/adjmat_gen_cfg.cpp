@@ -43,10 +43,16 @@ AdjMatGenCfg::AdjMatGenCfg(){
 		("fullconn_adjmat_gen.patsize",  value<int>()->default_value(5), "Size of Pattern in Graph to generate")
 		("fullconn_adjmat_gen.jumble",  value<bool>()->default_value(false), "Whether to jumble the matrices")
 		;
+	options_description sdf_amg("  SDF AdjMatGen");
+	sdf_amg.add_options()
+		("SDFAdjmatGen.files", value<string>()->default_value(""), "sdf-files, format: file:class,file:class")
+		("SDFAdjmatGen.fixed_size", value<int>()->default_value(0), "fixed size of molecules")
+		;
 	od.add(rand_amg);
 	od.add(randpat_amg);
 	od.add(fullconn_amg);
 	od.add(mutagenesis);
+	od.add(sdf_amg);
 	gCfg().addModuleOptions(od);
 }
 
