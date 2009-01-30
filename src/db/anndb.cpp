@@ -61,8 +61,12 @@ void ANNDB::finish()
 		BOOST_FOREACH(const point_type& d, c){
 			memset(&str[0],0,255);
 			mAllTree->annTrace(const_cast<double*>(&d[0]), &str[0]);
-			if(mLeafs.find(string(str)) == mLeafs.end())
-				mLeafs[string(str)] = mLeafCount++;
+			for(int c=254;c>=0;c--){
+				if(str[c]==0) continue;
+				if(mLeafs.find(string(&str[0])) == mLeafs.end())
+					mLeafs[string(&str[0])] = mLeafCount++;
+				str[c]='\0';
+			}
 		}
 	}
 	cout << endl<<"Number of leafs: " << mLeafCount<<endl;
@@ -72,20 +76,32 @@ void ANNDB::finish()
 boost::numeric::ublas::vector<int>    
 ANNDB::getFeatures(int i)
 {
-	I(i<mClouds.size());
+	I(i<(int)mClouds.size());
 	return getFeatures(mClouds[i]);
 }
+
+const ANNDB::TCloud&
+ANNDB::getCloud(int i)
+{
+	I(i<(int)mClouds.size());
+	return mClouds[i];
+}
+
 
 boost::numeric::ublas::vector<int>    
 ANNDB::getFeatures(const TCloud& cloud)
 {
 	char str[255];
-	int idx=0;
 	ublas::vector<int> res(mLeafCount,0);
 	BOOST_FOREACH(const point_type& p, cloud){
 		memset(&str[0],0,255);
 		mAllTree->annTrace(const_cast<double*>(&p[0]), &str[0]);
-		res(mLeafs[string(str)]) ++;
+		for(int c=254;c>=0;c--){
+			if(str[c]==0) continue;
+			res(mLeafs[string(&str[0])]) ++;
+			//res(mLeafs[string(&str[0])]) =1;
+			str[c]='\0';
+		}
 	}
 	return res;
 }

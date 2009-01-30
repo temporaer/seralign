@@ -15,6 +15,7 @@ class ANNDB : public GraphDB
 	virtual void add(const ProbAdjPerm& pap, const TCloud& cloud);
 	virtual boost::numeric::ublas::vector<int>    getFeatures(const TCloud& cloud);
 	virtual boost::numeric::ublas::vector<int>    getFeatures(int i);
+	virtual const TCloud&                         getCloud(int i);
 	virtual void finish();
 	virtual void init(int dim);
     virtual ~ANNDB();
