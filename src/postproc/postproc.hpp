@@ -3,6 +3,7 @@
 #include <Serialization.hpp>
 #include <vector>
 #include <DBPoint.hpp>
+#include <boost/any.hpp>
 class AdjMatGen;
 class ProbAdjPerm;
 
@@ -29,7 +30,7 @@ class PostProc
 
 	virtual void atStart();
 	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob);
-	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, const std::string& ref="");
+	virtual void atSeriation(AdjMatGen& gen, Serialization& ser, const boost::any&);
 	virtual void atSeriation(AdjMatGen& gen, const DBCloud&, ProbAdjPerm& prob);
 	virtual void atEnd();
 

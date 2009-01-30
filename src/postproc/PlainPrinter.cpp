@@ -34,19 +34,19 @@ void PlainPrint::atEnd()
 
 void PlainPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& prob)
 {
+	boost::any ref = prob.getBackground();
 	Serialization::RankT ranks(ser.getRanks().size());
 	for(unsigned int i=0;i<ranks.size();i++)
 		ranks[i] = prob.getOriginalIndex(ser.getRanks()[i]);
-	seqhead(gen);
+	mOS  << gen.getGraphID(ref) <<":";
 	for(unsigned int i=0; i<ranks.size(); i++)
 	{
-		mOS	<< gen.getPlainDescription(i, ranks);
+		mOS	<< gen.getPlainDescription(i, ranks, ref);
 	}
 	seqfoot();
 }
 
 void PlainPrint::seqhead(AdjMatGen& gen){
-	mOS  << gen.getGraphID() <<":";
 }
 void PlainPrint::seqfoot(){
 	mOS  <<endl; 

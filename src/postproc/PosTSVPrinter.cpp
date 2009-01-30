@@ -46,7 +46,8 @@ void PosTSVPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& p
 		//mOS	<< gen.getPlainDescription(i, ranks);
 	for(unsigned int i=0; i<ser.getPositions().size()-1; i++)
 		mOS	<< ser.getPositions()(i+1) - ser.getPositions()(i) << ",";
-	mOS  << ((gen.getClassID()==0)?"A":"B") <<endl;
+	boost::any ref = prob.getBackground();
+	mOS  << ((gen.getClassID(ref)==0)?"A":"B") <<endl;
 	seqfoot();
 }
 

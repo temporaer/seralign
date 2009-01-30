@@ -40,11 +40,11 @@ void RealXMLPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& 
 	Serialization::RankT ranks = ser.getRanks();
 	for(unsigned int i=0;i<ranks.size();i++)
 		ranks[i] = prob.getOriginalIndex(ser.getRanks()[i]);
-	seqhead(gen);
+	mOS  << "  <sequence id=\"" << gen.getGraphID(prob.getBackground()) <<"\">"<<endl; 
 	for(unsigned int i=0; i<ranks.size(); i++)
 	{
 		mOS	<<"    <atom>" <<endl
-			<<"      <symbol>" << gen.getPrologDescription(i,ranks) << "</symbol>" << endl
+			<<"      <symbol>" << gen.getPrologDescription(i,ranks, prob.getBackground()) << "</symbol>" << endl
 			<<"      <label>none</label>"   <<endl
 			<<"    </atom>"<<endl;
 	}
@@ -52,7 +52,6 @@ void RealXMLPrint::atSeriation(AdjMatGen& gen, Serialization& ser, ProbAdjPerm& 
 }
 
 void RealXMLPrint::seqhead(AdjMatGen& gen){
-	mOS  << "  <sequence id=\"" << gen.getGraphID() <<"\">"<<endl; 
 }
 void RealXMLPrint::seqfoot(){
 	mOS  << "  </sequence>"<<endl; 

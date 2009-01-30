@@ -54,8 +54,6 @@ FullConnAdjmatGen::~FullConnAdjmatGen()
 }
 std::string FullConnAdjmatGen::getGraphID(const boost::any& ref)
 {
-	stringstream str;
-	//str<<"fullconngraph_"<<mSize<<"_"<<mRunningID;
 	return any_cast<Descriptor*>(ref)->mName;
 }
 std::string FullConnAdjmatGen::getGraphVizNodeAttribs(int idx, const boost::any& ref)
@@ -109,7 +107,7 @@ ProbAdjPerm FullConnAdjmatGen::operator()()
 
 	ProbAdjPerm pap;
 	pap.setAdjMat(adj);
-	pap.setId(getGraphID(""));
+	pap.setId(desc.mName);
 	pap.setBackground(&mDescriptors.back());
 
 	if(mJumble){
