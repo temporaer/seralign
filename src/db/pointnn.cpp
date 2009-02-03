@@ -242,8 +242,8 @@ void PointNNDB::Impl::evaluate(AdjMatGen& gen, int k){
 		// RPROP
 		int dir    = 0;
 		if(0);
-		else if(in_c(i)-btw_c(i)>0) dir = -1; // TODO: switch to + for spectral
-		else if(in_c(i)-btw_c(i)<0) dir = +1; // TODO: switch to - for spectral
+		else if(in_c(i)-btw_c(i)>0) dir = +1; 
+		else if(in_c(i)-btw_c(i)<0) dir = -1;
 		int sgn = dir*mFeatureDir(i);
 		if(0);
 		else if(sgn>0)
