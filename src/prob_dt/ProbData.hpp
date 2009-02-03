@@ -29,7 +29,7 @@ class ProbAdjPerm
 
 	template <class T> 
 		inline void setBackground(const T& b){mBackground=b;}
-	inline boost::any getBackground(){ return mBackground; }
+	inline const boost::any getBackground()const{ return mBackground; }
 
   private:
 

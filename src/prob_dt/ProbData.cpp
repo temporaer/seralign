@@ -33,7 +33,7 @@ void ProbAdjLapPerm::calculateLaplacian()
 	boost::shared_ptr<Laplacian::LaplacianT> L_ptr( new Laplacian::LaplacianT(n,n) );
 	Laplacian::LaplacianT& L = *L_ptr;
 	L = deg-adj;
-	/*
+#if 0
 	for(int u=0;u<n;u++)
 		for(int v=0;v<n;v++)
 		{
@@ -44,7 +44,7 @@ void ProbAdjLapPerm::calculateLaplacian()
 			else
 				L(u,v) = 0;
 		}
-	*/
+#endif
 	setLaplacian(L_ptr);
 }
 ProbAdjLapPerm::ProbAdjLapPerm(const ProbAdjPerm& p)
