@@ -34,17 +34,18 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings -Wall" )
 ENDIF()
 
-IF(CMAKE_COMPILER_IS_GNUCC)
-	IF(CMAKE_BUILD_TYPE EQUALS "Debug")
+IF(CMAKE_COMPILER_IS_GNUCXX)
+	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		# Debug mode: Use Safe Containers
-		ADD_DEFINITIONS(-D_GLIBCXX_DEBUG)
+		#ADD_DEFINITIONS(-D_GLIBCXX_DEBUG)
 	ELSE()
 		# Other modes: Use Parallel Algorithms
 		# turn off at single uses like so:
 		# std::sort(v.begin(), v.end(), __gnu_parallel::sequential_tag());
-		ADD_DEFINITIONS(-D_GLIBCXX_PARALLEL)
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -march=native" )
+		#ADD_DEFINITIONS(-D_GLIBCXX_PARALLEL) # does not work
 	ENDIF()
-ENDIF(CMAKE_COMPILER_IS_GNUCC)
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 
 # Precompiled Headers
