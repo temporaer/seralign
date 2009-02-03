@@ -26,7 +26,9 @@ namespace fs = boost::filesystem;
 #include <GraphFromAdj.hpp>
 
 #include <graph_embedder.hpp> 
+#include <feature_embedder.hpp>
 #include <anndb.hpp>
+#include <pointnn.hpp>
 
 #include "build_db.hpp"
 
@@ -44,11 +46,12 @@ using namespace boost;
 
 void BuildDB::operator()()
 {
-	mDB.reset( new ANNDB() );
+	//mDB.reset( new ANNDB() );
+	mDB.reset( new PointNNDB() );
 	mDB->configure();
 
 	string adjmat_gen_name               = gCfg().getString("serialize.adjmat_gen");
-	auto_ptr<AdjMatGen> adjmat_gen       = genericFactory<AdjMatGen>::instance().create(adjmat_gen_name);
+	shared_ptr<AdjMatGen> adjmat_gen     ( genericFactory<AdjMatGen>::instance().create(adjmat_gen_name) );
 	if(!adjmat_gen.get())
 		throw logic_error(string("Supplied AdjMatGen `") + adjmat_gen_name + "' does not exist");
 	adjmat_gen->configure();
@@ -61,223 +64,87 @@ void BuildDB::operator()()
 	int max_num = gCfg().getInt("serialize.max_num");
 
 	//out_ptr->atStart();
-	int  cnt=0;
 	bool verbose    = gCfg().getBool("verbose");
 	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
+	int embed_dim = gCfg().getInt("BuildDB.embed_dim");
+
+	ofstream classAcc("/tmp/acc.dat");
 
 	string gemb_name                     = gCfg().getString("BuildDB.embed_meth");
 	auto_ptr<GraphEmbedder> gemb_ptr     = genericFactory<GraphEmbedder>::instance().create(gemb_name);
 	if(!gemb_ptr.get())
 		throw logic_error(string("Supplied Embedding Method `") + gemb_name + "' does not exist");
+	if(gemb_name == "FeatureGraphEmbedder")
+		((FeatureGraphEmbedder*)gemb_ptr.get())->setAdjMatGen(adjmat_gen, embed_dim);
 	
 	string ofile("centroids.dat");
 	string opath =  gCfg().getString("output-dir");
 	ofstream ofp( (fs::path(opath) / fs::path(ofile)).string().c_str());
 
-	int embed_dim = gCfg().getInt("BuildDB.embed_dim");
 
 	gemb_ptr->configure();
-	ExactDescriptiveStatistics nstats("nstats");
-	
-	ProgressBar pb(max_num==0?41100:max_num, "serializing");
-	while(true){
-		if(nonverbose) { pb.inc();                                          }
-		if(verbose)    { L("Action::BuildDB %03d: Generating...\n", cnt); }
-		ProbAdjPerm prob =  (*adjmat_gen)() ;
-		if(!adjmat_gen->hasNext())
-			break;
-		nstats.notify(prob.getAdjMat()->size1());
-		// WARNING: Permutation is dangerous, since modules later 
-		// on do not have access to the permutation matrix!
-		shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
-		*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
-		prob.setPermMat(P_ptr);
 
-		if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
-		GraphEmbedder::cloud_type cloud = (*gemb_ptr)(prob,embed_dim);
-		//if(adjmat_gen->getClassID() == 1)
-		mDB->add(prob, cloud);
+	bool iterate = false;
+	do{
+		int  cnt=0;
+		ExactDescriptiveStatistics nstats("nstats");
+		
+		ProgressBar pb(max_num==0?600:max_num, "serializing");
+		while(true){
+			if(nonverbose) { pb.inc();                                          }
+			if(verbose)    { L("Action::BuildDB %03d: Generating...\n", cnt); }
+			ProbAdjPerm prob =  (*adjmat_gen)() ;
+			if(!adjmat_gen->hasNext())
+				break;
+			nstats.notify(prob.getAdjMat()->size1());
+			// WARNING: Permutation is dangerous, since modules later 
+			// on do not have access to the permutation matrix!
+			shared_ptr<PermMat::PermMatT> P_ptr(new PermMat::PermMatT(prob.getAdjMat()->size1(),prob.getAdjMat()->size1()));
+			*P_ptr = numeric::ublas::identity_matrix<double>(prob.getAdjMat()->size1(),prob.getAdjMat()->size1());
+			prob.setPermMat(P_ptr);
 
-		cnt++;
-		if(cnt == max_num)
-			break;
-	}
-	mDB->finish();
-	cout <<nstats<<endl;
-	if(nonverbose) { pb.finish(); }
-	//out_ptr->atEnd();
-	
-	int evalMode = gCfg().getInt("BuildDB.evalmode");
+			if(verbose){ L("Action::BuildDB %03d: Building internal representation...\n", cnt);}
+			GraphEmbedder::cloud_type cloud = (*gemb_ptr)(prob,embed_dim);
+			//if(adjmat_gen->getClassID() == 1)
+			mDB->add(prob, cloud);
 
-
-	
-	if(evalMode ==0)
-		throw runtime_error("evalMode not implemented");
-		//printDistMatrix(cnt);
-	else if(evalMode == 1)
-		spatialAnalysis(cnt, *adjmat_gen);
-	else if(evalMode == 2){
-		throw runtime_error("evalMode not implemented");
-		//int qid = gCfg().getInt("BuildDB.query_id");
-		//ExactDescriptiveStatistics stats("accuracy");
-		//ProgressBar pbclass(cnt,"KNN Classify");
-		//Gnuplot gp("lines");
-		//gp.set_yrange(0,1);
-		//std::vector<float> statsv;
-		//int K = gCfg().getInt("BuildDB.knn_k"); 
-		//for(int i=0;i<cnt;i++){
-			//pbclass.inc();
-			//int klass = knn_classify(cnt, i, *adjmat_gen, *out_ptr, K);
-			//stats.notify(klass == adjmat_gen->getClassID(mDB.getIDs()[i]) ? 1 : 0);
-			//statsv.push_back(stats.getMean());
-			//if(cnt % 20 == 0){
-				//gp.reset_plot();
-				//gp.plot_x(statsv,"accuracy");
-			//}
-		//}
-		//pbclass.finish();
-		//cout <<stats<<endl;
-	}else
-		cout << "Unknown EvalMode"<<endl;
-}
-
-/*
-int BuildDB::knn_classify(int cnt, int id, AdjMatGen& gen, PostProc& out, int k){
-	//bool verbose    = gCfg().getBool("verbose");
-	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
-
-	//ProgressBar matching(cnt, "Matching");
-	ofstream os(gCfg().getOutputFile("output").c_str());
-	std::vector<double>  dists(cnt); // icp distances
-	std::vector<double> cdists(cnt); // centroid distances
-
-	for(int i=0; i<cnt; i++){
-		//if(nonverbose){matching.inc();}
-		cdists[i] = norm_2(mDB[i].getModelCentroid() - mDB[id].getModelCentroid());
-		dists[i]  = match(mDB[i],mDB[id]);
-	}
-	//if(nonverbose){matching.finish();}
-
-	vector<unsigned int> granks(cnt), cranks(cnt);
-	for(int i=0; i<cnt; i++) granks[i]=i;
-	for(int i=0; i<cnt; i++) cranks[i]=i;
-	sort(granks.begin(), granks.end(), bl::var( dists)[bl::_1] < bl::var( dists)[bl::_2]);
-	sort(cranks.begin(), cranks.end(), bl::var(cdists)[bl::_1] < bl::var(cdists)[bl::_2]);
-	//cout << "Cranks: "<<endl;
-	for(int i=0;i<k+1;i++){
-		int idx = cranks[i];
-		GDistProjectedDB::TICP& icp = mDB[idx];
-		int n=icp.size();
-		Serialization ser(n);
-		int nodecount=0;
-		for(GDistProjectedDB::TICP::iterator it=icp.begin(); it!=icp.end(); it++, nodecount++){
-			ser.getRanks()[nodecount]   = it->id;
-			ser.setPosition(it->id, it->pos);
+			cnt++;
+			if(cnt == max_num)
+				break;
 		}
-		//cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
-		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
-	}
-
-	//cout << "ICPranks: "<<endl;
-	out.atStart();
-	map<int,double> classcnt;
-	typedef map<int,double>::iterator CCIt;
-	typedef pair<int,double> CCItP;
-	for(int i=0;i<k+1;i++){
-		int idx = granks[i];
-		double dist = dists[idx];
-		GDistProjectedDB::TICP& icp = mDB[idx];
-		int n=icp.size();
-		Serialization ser(n);
-		int nodecount=0;
-		for(GDistProjectedDB::TICP::iterator it=icp.begin(); it!=icp.end(); it++, nodecount++){
-			ser.getRanks()[nodecount]   = it->id;
-			ser.setPosition(it->id, it->pos);
-		}
-		//cout << "  Match i="<<i<<"\t"<<mDB.getIDs()[idx]<<endl;
-		out.atSeriation(gen, ser, mDB.getIDs()[idx]);
-		if(i>0) // TODO: need more elegant sol'n. ignore pattern itself!
-		{
-			int klass = gen.getClassID(mDB.getIDs()[idx]);
-#if 1
-			// weighted knn
-			if(classcnt.find(klass) == classcnt.end())
-				classcnt[klass]  = 1.0/(dist);
-			else
-				classcnt[klass] += 1.0/(dist);
-#else
-			if(classcnt.find(klass) == classcnt.end())
-				classcnt[klass]  = 1.0;
-			else
-				classcnt[klass] += 1.0;
-#endif
-		}
-	}
-	out.atEnd();
-
-	// return the class which was voted for most
-	return max_element(classcnt.begin(), classcnt.end(), 
-			bl::bind<const int&>(&CCItP::second, bl::_1) < 
-			bl::bind<const int&>(&CCItP::second, bl::_2))
-			->first;
-}
-*/
-
-/*
-void BuildDB::printDistMatrix(int cnt){
-	//bool verbose    = gCfg().getBool("verbose");
-	bool nonverbose = !gCfg().getBool("quiet") && !gCfg().getBool("verbose");
-
-	ProgressBar matching(cnt, "Matching");
-	ofstream os(gCfg().getOutputFile("output").c_str());
-	// output distances as CSV
-	for(vector<string>::const_iterator it=mDB.getIDs().begin(); it!=mDB.getIDs().end(); it++){
-		os <<","<<(*it);
-	}
-	os<<endl;
-	numeric::ublas::matrix<double> dmat(cnt,cnt);
-	int dmat_i=0, dmat_j=0;
-	for(GDistProjectedDB::iterator it=mDB.begin(); it!=mDB.end(); it++){
-		if(nonverbose){matching.inc();}
-		vector<GDistProjectedDB::point_type> query;
-		copy(it->begin(),it->end(),back_inserter(query));
-		os << "dummy";
-		for(GDistProjectedDB::iterator it2=mDB.begin(); it2!=mDB.end(); it2++){
-			if(dmat_i < dmat_j){
-				dmat_i++;
-				continue;
+		if(nonverbose) { pb.finish(); }
+		cout <<nstats<<endl;
+		mDB->finish();
+		//out_ptr->atEnd();
+	
+		int evalMode = gCfg().getInt("BuildDB.evalmode");
+	
+		if(0);
+		else if(evalMode == 1)
+			spatialAnalysis(cnt, *adjmat_gen);
+		else if(evalMode == 2){
+			mDB->evaluate(*adjmat_gen, 5);
+			ExactDescriptiveStatistics acc("Accuracy ");
+			while(true){
+				ProbAdjPerm pap = (*adjmat_gen)();
+				if(pap.getAdjMat().get()==NULL)
+					break;
+				int tc = adjmat_gen->getClassID(pap.getBackground());
+				int cc = mDB->classify((*gemb_ptr)(pap,embed_dim), *adjmat_gen, 10);
+				acc += tc==cc;
 			}
-			double dist = match(*it, *it2);
-			dmat(dmat_i,dmat_j) = dmat(dmat_j,dmat_i) = dist;
-			dmat_i++;
-		}
-		dmat_j++; dmat_i=0;
-	}
-	if(nonverbose){matching.finish();}
-	for(int i=0;i<cnt;i++){
-		os << "dummy";
-		for(int j=0;j<cnt;j++){
-			os << "," <<min(dmat(i,j),dmat(j,i));
-		}
-		os << endl;
-	}
+			cout << acc<<endl;
+			classAcc << acc.getMean() <<endl;
+			mDB->clear();
+			if(gemb_name == "FeatureGraphEmbedder") // reset this, too
+				((FeatureGraphEmbedder*)gemb_ptr.get())->setAdjMatGen(adjmat_gen, embed_dim);
+			adjmat_gen->rewind();
+			iterate = true;
+		}else
+			cout << "Unknown EvalMode"<<endl;
+	}while(iterate);
 }
-*/
-/*
-double
-BuildDB::match(GDistProjectedDB::TICP& a,GDistProjectedDB::TICP& b){
-	vector<GDistProjectedDB::point_type> query1, query2;
-	copy(a.begin(),a.end(),back_inserter(query1));
-	copy(b.begin(),b.end(),back_inserter(query2));
-	b.match(query1.begin(),query1.end(),
-			GDistProjectedDB::point_type::Translator(),
-			GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
-	a.match(query2.begin(),query2.end(),
-			GDistProjectedDB::point_type::Translator(),
-			GDistProjectedDB::point_type::Rotator<GDistProjectedDB::TICP::TQuat>());
-	return a.getMatchingError() + b.getMatchingError();
-}
-*/
+
 
 BuildDB::~BuildDB()
 {
@@ -352,14 +219,14 @@ void BuildDB::spatialAnalysis(int cnt, AdjMatGen& adjmatgen)
 {  
 	ofstream os("/tmp/spatdb.csv");
 	for(int c=0;c<cnt;c++){
-		ublas::vector<int> v = mDB->getFeatures(c);
-		string s             = mDB->getPap(c).getId();
-		int klass            = adjmatgen.getClassID(s);
+		ublas::vector<int> v  = mDB->getFeatures(c);
+		const boost::any& ref = mDB->getPap(c).getBackground();
+		int klass             = adjmatgen.getClassID(ref);
 #define NUMATOM_ONLY 0
 #if NUMATOM_ONLY
 		if(c==0)
 			os << "numAtom,klass"<<endl;
-		os << mDB->getPap(c).getAdjMat()->size1()<<",";
+		os << mDB->getPap(c).getAdjMat(ref)->size1()<<",";
 #else
 		if(c==0){
 			// header
