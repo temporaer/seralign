@@ -23,6 +23,7 @@ include_directories (
 add_library( hrdb SHARED 
 	icpdb.cpp icpdb.hpp 
 	anndb.cpp anndb.hpp 
+	pointnn.cpp pointnn.hpp 
 	db_cfg.cpp
 	)
 target_link_libraries(hrdb  ${Boost_LIBRARIES} ${NANA_LIBRARIES} ${ANN_LIBRARIES} )
