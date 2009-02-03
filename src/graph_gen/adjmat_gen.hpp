@@ -13,6 +13,7 @@
  */
 class AdjMatGen {
 	public:
+		typedef boost::numeric::ublas::vector<double> feature_t;
 		virtual void configure();          ///< call setters/getters using data from config-file
 		virtual ProbAdjPerm operator()();  ///< generate a adjacency matrix
 		virtual ~AdjMatGen();              ///< virtual destructor
@@ -36,6 +37,21 @@ class AdjMatGen {
 		/// for drawing: return additional node attributes in graphviz-syntax.
 		/// should start with a comma if none-empty!
 		virtual std::string getGraphVizNodeAttribs(int idx,const boost::any&); 
+
+		/// get number of features of a node
+		virtual unsigned int getNumFeatures(){ return 0;}
+
+		/// get features of i-th node in problem referred to by ref
+		virtual feature_t getFeatures(int idx, const boost::any&);
+
+		/// set feature weights
+		virtual void setFeatureWeights(const boost::numeric::ublas::vector<double>&);
+
+		/// set feature weights
+		virtual const boost::numeric::ublas::vector<double>& getFeatureWeights()const;
+
+		/// start over with generating the adj-matrices
+		virtual void rewind();
 
 		/// whether to be verbose
 		static inline void setVerbose(bool b)  {mVerbose=b;}

@@ -31,11 +31,28 @@ string AdjMatGen::getPrologDescription(int ser_idx, const Serialization&, const 
 {
 	throw runtime_error("AdjMatGen::getPrologDescription() not implemented for subclass"); 
 }
-
+void AdjMatGen::rewind()
+{
+	throw runtime_error("AdjMatGen::rewind() not implemented for subclass"); 
+}
 int AdjMatGen::getClassID(const boost::any& ref)
 {
 	return 0;
 }
+AdjMatGen::feature_t 
+AdjMatGen::getFeatures(int idx, const boost::any&)
+{
+	throw runtime_error("AdjMatGen::getFeatures() not implemented for subclass"); 
+}
+const boost::numeric::ublas::vector<double>& 
+AdjMatGen::getFeatureWeights()const
+{
+	throw runtime_error("AdjMatGen::getFeatureWeights() not implemented for subclass"); 
+}
+void AdjMatGen::setFeatureWeights(const boost::numeric::ublas::vector<double>&)
+{
+}
+
 boost::shared_ptr<AdjMat::AdjMatT> 
 AdjMatGen::getAdjMat(const boost::any& ref)
 {
