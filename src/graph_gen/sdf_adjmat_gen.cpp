@@ -1,11 +1,16 @@
 #include <sstream>
 #include <fstream>
+#include <numeric>
 #include <configuration.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
 #include <boost/foreach.hpp>
 #include <boost/graph/graphviz.hpp>
 
@@ -22,6 +27,7 @@ using namespace std;
 using namespace boost;
 namespace ublas = boost::numeric::ublas;
 namespace fs = boost::filesystem;
+namespace ll = boost::lambda;
 
 bool nextLineMatches(istream& is, string re){
 	string s;
@@ -46,10 +52,14 @@ void SDFAdjmatGen::configure()
 SDFAdjmatGen::SDFAdjmatGen()
 	:mFixedSize(0)
 {
+	// randomly between 0.5 and 1
+	mFeatureWeights = ublas::vector<double>(getNumFeatures());
+	generate(mFeatureWeights.begin(), mFeatureWeights.end(), drand48);
+	transform(mFeatureWeights.begin(), mFeatureWeights.end(), mFeatureWeights.begin(), 0.5+ll::_1/2.0);
 }
 bool SDFAdjmatGen::hasNext()
 {
-	return mOutputCounter < (int)mDescriptors.size();
+	return mOutputCounter < (int)(0.90*mDescriptors.size());
 }
 SDFAdjmatGen::~SDFAdjmatGen()
 {
@@ -72,6 +82,8 @@ int SDFAdjmatGen::getClassID(const boost::any& ref)
 	return any_cast<Descriptor*>(ref)->classid;
 }
 
+inline double my_exp(const double& d){ return exp(d); }
+
 ProbAdjPerm SDFAdjmatGen::operator()()
 {
 	if(mDescriptors.size()==0){
@@ -82,6 +94,11 @@ ProbAdjPerm SDFAdjmatGen::operator()()
 		}else
 			readInputFiles();
 		mOutputCounter = 0;
+	}
+	if((unsigned int)mOutputCounter>=mDescriptors.size()){
+		ProbAdjPerm pap;
+		pap.setAdjMat(boost::shared_ptr<AdjMat::AdjMatT>());
+		return pap;
 	}
 
 	Descriptor& desc  = mDescriptors[mOutputCounter++];
@@ -94,16 +111,23 @@ ProbAdjPerm SDFAdjmatGen::operator()()
 	shared_ptr<AdjMat::AdjMatT> adj(new AdjMat::AdjMatT(n, n));
 	*adj = ublas::scalar_matrix<double>(n,n,0);
 	SDFEdgeIterator ei, ei_end;
+
 	for(tie(ei,ei_end)=bgl::edges(graph);ei!=ei_end;ei++){
-			(*adj)(bgl::source(*ei, graph),bgl::target(*ei,graph)) = 
-			(*adj)(bgl::target(*ei, graph),bgl::source(*ei,graph)) = 
-			bgl::get(bgl::get(bgl::edge_weight,graph),*ei);
+		feature_t f = ublas::element_prod(edge_features(*ei, graph), mFeatureWeights);
+		double d = 
+			//1.0-exp(-accumulate(f.begin(), f.end(), 0.0, ll::_1 + ll::_2));
+			accumulate(f.begin(), f.end(), 0.0, ll::_1 + ll::_2);
+		d = max(d, 1E-5); // required by embedders
+		bgl::put(bgl::edge_weight, graph, *ei, d);
+		(*adj)(bgl::source(*ei, graph),bgl::target(*ei,graph)) = 
+		(*adj)(bgl::target(*ei, graph),bgl::source(*ei,graph)) = 
+		d;
 	}
 
 	ProbAdjPerm pap;
 	pap.setAdjMat(adj);
 	pap.setId(gname);
-	pap.setBackground(&desc.graph);
+	pap.setBackground(&desc);
 
 	return pap;
 }
@@ -136,11 +160,13 @@ void SDFAdjmatGen::readInputFiles()
 	BOOST_FOREACH(const FileDescriptor& fd, mInputFiles){
 		L("Reading SDF input file `%s'...", fd.name.c_str());
 		ifstream is(fd.name.c_str());
-		while(readMolekule(is, fd.classid, graphCount++));
+		int fcnt = 0;
+		while(readMolekule(is, fd.classid, graphCount++) && fcnt++<200);
 		L(". %d molecules read.\n", graphCount);
 	}
 	ofstream os("/tmp/graphs.ser");
 	archive::binary_oarchive ar(os);
+	random_shuffle(mDescriptors.begin(), mDescriptors.end());
 	ar << const_cast<const SDFAdjmatGen&>(*this);
 }
 
@@ -208,7 +234,7 @@ bool SDFAdjmatGen::readMolekule(std::istream& is, int klass, int graphCount)
 			return false;
 		}
 		bgl::add_edge(atomFrom, atomTo, graph);
-		bgl::get(bgl::get(bgl::edge_weight, graph),bgl::edge(atomFrom, atomTo, graph).first) = bondType;
+		bgl::get(bgl::get(bgl::bondnum, graph),bgl::edge(atomFrom, atomTo, graph).first) = bondType;
 	}
 	if(!nextLineMatches(is,".*END	BOND"))return false;
 	if(!nextLineMatches(is,".*END	CTAB"))return false;
@@ -233,16 +259,128 @@ bool SDFAdjmatGen::readMolekule(std::istream& is, int klass, int graphCount)
 	std::map<std::string,std::string> graph_attr, vertex_attr, edge_attr;
 	vertex_attr["label"] = gname;
 
-	bgl::write_graphviz(os, graph, 
-			bgl::make_label_writer(bgl::get(bgl::vertex_name,graph)),
-			bgl::make_label_writer(bgl::get(bgl::edge_weight,graph)),
-			bgl::make_graph_attributes_writer(graph));
+	bgl::write_graphviz(os, graph 
+			,bgl::make_label_writer(bgl::get(bgl::vertex_name,graph))
+			,bgl::make_label_writer(bgl::get(bgl::edge_weight,graph))
+			//,bgl::make_graph_attributes_writer(graph)
+			);
 			*/
 	
 	mDescriptors.push_back(desc);
 
 	return true;
 }
+void SDFAdjmatGen::rewind()
+{
+	for(unsigned int i=0;i<mDescriptors.size(); i++){
+		Descriptor& d = mDescriptors[i];
+		string s = (boost::format("../../data/hiv/results/SDF_class%d_%d.dot")%d.classid%i).str();
+		ofstream os(s.c_str());
+		bgl::write_graphviz(os, d.graph 
+				,bgl::make_label_writer(bgl::get(bgl::vertex_name,d.graph))
+				,bgl::make_label_writer(bgl::get(bgl::edge_weight,d.graph))
+				);
+	}
+	mOutputCounter = 0;
+	mDescriptors.clear();
+}
 
+void SDFAdjmatGen::setFeatureWeights(const boost::numeric::ublas::vector<double>& v)
+{
+	mFeatureWeights = v;
+}
+
+
+unsigned int SDFAdjmatGen::getNumFeatures() {
+	return 17;
+}
+SDFAdjmatGen::feature_t
+SDFAdjmatGen::edge_features(const SDFEdge& e, const SDFGraph& graph)
+{
+	feature_t f(getNumFeatures(),0);
+	SDFVertex src = bgl::source(e, graph);
+	SDFVertex tar = bgl::target(e, graph);
+	int c=0;
+	f(c++) = 
+		bgl::get(bgl::bondnum,graph,e);
+	f(c++) = 
+		bgl::get(bgl::bondnum,graph,e) == 1;
+	f(c++) = 
+		bgl::get(bgl::bondnum,graph,e) == 2;
+	f(c++) = 
+		bgl::get(bgl::bondnum,graph,e) == 7;
+	f(c++) = 
+		bgl::get(bgl::vertex_name,graph,src) ==
+		bgl::get(bgl::vertex_name,graph,tar);
+	f(c++) = 
+		bgl::get(bgl::vertex_name,graph,src) == "C" ||
+		bgl::get(bgl::vertex_name,graph,tar) == "C"   ;
+	f(c++) = 
+		bgl::get(bgl::vertex_name,graph,src) == "C" &&
+		bgl::get(bgl::vertex_name,graph,tar) == "C"   ;
+	f(c++) = 
+		(bgl::get(bgl::vertex_name,graph,src) == "O")  +
+		(bgl::get(bgl::vertex_name,graph,tar) == "O")   ;
+	f(c++) = 
+		(bgl::get(bgl::vertex_name,graph,src) == "S")  +
+		(bgl::get(bgl::vertex_name,graph,tar) == "S")   ;
+	f(c++) = 
+		(bgl::get(bgl::vertex_name,graph,src) == "N")  +
+		(bgl::get(bgl::vertex_name,graph,tar) == "N")   ;
+	f(c++) = 
+		(bgl::get(bgl::vertex_name,graph,src) == "Cl")  +
+		(bgl::get(bgl::vertex_name,graph,tar) == "Cl")   ;
+	f(c++) = 
+		(bgl::get(bgl::vertex_name,graph,src) == "P")  +
+		(bgl::get(bgl::vertex_name,graph,tar) == "P")   ;
+
+	int snap=0;
+	// 2nd order features
+	SDFVertex srcdest[2] = {src,tar};
+	SDFAdjIterator it, it_end;
+	for(int i = 0; i< 2; i++){
+		for(tie(it,it_end) = adjacent_vertices(srcdest[i],graph);
+				it!=it_end; it++){
+			snap = c;
+			f(snap) += bgl::get(bgl::vertex_name,graph,*it) == "N";  snap++;
+			f(snap) += bgl::get(bgl::vertex_name,graph,*it) == "C";  snap++;
+			f(snap) += bgl::get(bgl::vertex_name,graph,*it) == "S";  snap++;
+			f(snap) += bgl::get(bgl::vertex_name,graph,*it) == "P";  snap++;
+			f(snap) += bgl::get(bgl::vertex_name,graph,*it) == "Cl"; snap++;
+		}
+	}
+
+	for(unsigned int i=0;i<f.size();++i)
+		if(f(i)==0) f(i) = -1;
+	
+	return f;
+}
+
+SDFAdjmatGen::feature_t 
+SDFAdjmatGen::getFeatures(int idx, const boost::any& ref)
+{
+	SDFAdjmatGen::feature_t f(getNumFeatures(),0);
+	Descriptor& desc = * any_cast<Descriptor*>(ref);
+	SDFGraph& graph   = desc.graph;
+	SDFVertex v = bgl::vertex(idx,graph);
+
+	SDFOutEdgeIterator it, it_end;
+	tie(it,it_end) = bgl::out_edges(v, graph);
+	int cnt=0;
+	for(;it!=it_end;++it, ++cnt){
+		SDFEdge   e   = *it;
+		f += edge_features(e, graph);
+	}
+	if(cnt>0)
+		f/=cnt;
+	
+	return f;
+}
+
+const boost::numeric::ublas::vector<double>& 
+SDFAdjmatGen::getFeatureWeights()const
+{
+	return mFeatureWeights;
+}
 
 namespace{ registerInFactory<AdjMatGen, SDFAdjmatGen> registerBase("SDFAdjmatGen"); }
