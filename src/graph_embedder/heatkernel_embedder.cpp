@@ -26,22 +26,22 @@ HeatkernelGraphEmbedder::configure()
 }
 
 HeatkernelGraphEmbedder::cloud_type 
-HeatkernelGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
+HeatkernelGraphEmbedder::operator()(const ProbAdjPerm& pap, unsigned int dim)
 {
 	AdjMat::AdjMatT& A = *pap.getAdjMat();
-	int n = A.size1();
+	unsigned int n = A.size1();
 
 	// calculate Normalized Laplacian
 	ublas::matrix<double,ublas::column_major> Eigv(n,n);
 	ublas::vector<double> degs(n);
-	for(int i=0;i<n;i++){
+	for(unsigned int i=0;i<n;i++){
 		double sum=0.0;
-		for(int j=0;j<n;j++)
+		for(unsigned int j=0;j<n;j++)
 			sum += A(i,j);
 		degs(i) = sum;
 	}
-	for(int i=0; i<n; i++){
-		for(int j=i; j<n; j++){
+	for(unsigned int i=0; i<n; i++){
+		for(unsigned int j=i; j<n; j++){
 			if(i==j)                 Eigv(i,j) = 1.0;
 			else if(A(i,j)>0.00001)  {
 				double x = degs(i)*degs(j);
@@ -65,10 +65,10 @@ HeatkernelGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
 
 	// calculate heat kernel
 	ublas::matrix<double,ublas::column_major> H(n,n);
-	for(int i=0; i<n; i++){
-		for(int j=0; j<min(dim,n-1); j++){
+	for(unsigned int i=0; i<n; i++){
+		for(unsigned int j=0; j<min(dim,n-1); j++){
 			double sum=0.0;
-			for(int k=0; k<n; k++){
+			for(unsigned int k=0; k<n; k++){
 				double e = exp(-lambda(k) * mT);
 				double f = Eigv(k,i) * Eigv(k,j);
 				sum +=  e*f ;
@@ -82,9 +82,12 @@ HeatkernelGraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
 
 	cloud_type cloud(n, point_type(dim,0));
 	// create point cloud
-	for(int i=0;i<n;i++){
-		for(int d=0;d<min(dim, n-1);d++)
-			cloud[i][d] = H(i,d);
+	// empirically from octave: use _last_ dim vectors
+	int startdim = max(0, (int)n-(int)dim-1);
+	//int startdim = 0;
+	for(unsigned int i=0;i<n;i++){
+		for(unsigned int d=0;d<min(dim, n-1);d++)
+			cloud[i][d] = H(i,startdim+d);
 	}
 
 	return cloud;

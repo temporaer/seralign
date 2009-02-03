@@ -6,7 +6,7 @@ class HeatkernelGraphEmbedder : public GraphEmbedder
 {
   public:
     HeatkernelGraphEmbedder();
-	virtual cloud_type operator()(const ProbAdjPerm& pap, int dim);
+	virtual cloud_type operator()(const ProbAdjPerm& pap, unsigned int dim);
 	virtual void configure();
     virtual ~HeatkernelGraphEmbedder();
 

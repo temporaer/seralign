@@ -6,7 +6,7 @@ class SpectralGraphEmbedder : public GraphEmbedder
 {
   public:
     SpectralGraphEmbedder();
-	virtual cloud_type operator()(const ProbAdjPerm& pap, int dim);
+	virtual cloud_type operator()(const ProbAdjPerm& pap, unsigned int dim);
 	virtual void configure();
     virtual ~SpectralGraphEmbedder();
 

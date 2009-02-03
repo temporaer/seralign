@@ -11,7 +11,7 @@ class GraphEmbedder
 	  typedef std::vector<point_type>      cloud_type;
 
     GraphEmbedder();
-	virtual cloud_type operator()(const ProbAdjPerm& pap, int dim);
+	virtual cloud_type operator()(const ProbAdjPerm& pap, unsigned int dim);
     virtual void configure();
     virtual ~GraphEmbedder();
 

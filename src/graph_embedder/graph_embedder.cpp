@@ -14,7 +14,7 @@ void GraphEmbedder::configure()
 }
 
 GraphEmbedder::cloud_type 
-GraphEmbedder::operator()(const ProbAdjPerm& pap, int dim)
+GraphEmbedder::operator()(const ProbAdjPerm& pap, unsigned int dim)
 {
 	throw runtime_error("GraphEmbedder operator() not overloaded by subclass!");
 }
