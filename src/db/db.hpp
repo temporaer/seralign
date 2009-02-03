@@ -4,6 +4,7 @@
 #include <ProbData.hpp>
 #include <vector>
 #include <boost/numeric/ublas/fwd.hpp>
+class AdjMatGen;
 class GraphDB{
 	public:
 		typedef boost::numeric::ublas::vector<double> point_type;
@@ -18,7 +19,16 @@ class GraphDB{
 			throw std::runtime_error("getFeatures() not overloaded by your DB");
 		}
 		virtual const TCloud& getCloud(int i){
-			throw std::runtime_error("getFeatures() not overloaded by your DB");
+			throw std::runtime_error("getCloud() not overloaded by your DB");
+		}
+		virtual int classify(const TCloud& cloud, AdjMatGen& gen, int k){
+			throw std::runtime_error("classify() not overloaded by your DB");
+		}
+		virtual void evaluate(AdjMatGen& gen, int k){
+			throw std::runtime_error("evaluate() not overloaded by your DB");
+		}
+		virtual void clear(){
+			throw std::runtime_error("clear() not overloaded by your DB");
 		}
 		virtual void init(int dim){};
 		virtual void finish(){};
