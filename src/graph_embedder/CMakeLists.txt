@@ -17,6 +17,7 @@ add_library( graphemb SHARED
 	heatkernel_embedder.hpp   heatkernel_embedder.cpp 
 	spectral_embedder.hpp     spectral_embedder.cpp 
 	fastmap_embedder.hpp      fastmap_embedder.cpp 
+	feature_embedder.hpp      feature_embedder.cpp 
 	graph_embedder.hpp        graph_embedder.cpp 
 	graph_embedder_cfg.cpp
 	)
